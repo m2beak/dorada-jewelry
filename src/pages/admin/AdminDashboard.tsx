@@ -1200,7 +1200,7 @@ const MultiImageUpload: React.FC<{
         </button>
 
         <p className="text-xs text-dorada-cream/40">
-          JPG, PNG, WebP - الحد الأقصى 5 ميجابايت للصورة
+          JPG, PNG, WebP - الحد الأقصى 50 ميجابايت للصورة
         </p>
       </div>
     </div>
