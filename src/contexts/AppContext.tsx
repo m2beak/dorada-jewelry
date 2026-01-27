@@ -281,7 +281,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const result = await createOrder({
       ...orderData,
       items: orderItems,
-      total: currentCart.total,
+      total: currentCart.total + 5000,
       status: 'pending',
       statusAr: 'قيد الانتظار',
     });

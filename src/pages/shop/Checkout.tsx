@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Crown, 
-  ChevronLeft, 
-  Check, 
-  MapPin, 
-  User, 
+import {
+  Crown,
+  ChevronLeft,
+  Check,
+  MapPin,
+  User,
   Phone,
   Building,
   AlertCircle,
@@ -16,17 +16,17 @@ import { useApp } from '@/contexts/AppContext';
 const Checkout: React.FC = () => {
   const navigate = useNavigate();
   const { cart, formatPrice, placeOrder } = useApp();
-  
+
   const [formData, setFormData] = useState({
     customerName: '',
     customerPhone: '',
     customerAddress: '',
     customerCity: '',
   });
-  
+
   // Phone display with +964 prefix
   const [phoneDisplay, setPhoneDisplay] = useState('');
-  
+
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderSuccess, setOrderSuccess] = useState(false);
@@ -73,73 +73,73 @@ const Checkout: React.FC = () => {
   const formatPhoneDisplay = (value: string) => {
     // Remove non-digits
     let digits = value.replace(/\D/g, '');
-    
+
     // Remove leading 0 if present
     if (digits.startsWith('0')) {
       digits = digits.substring(1);
     }
-    
+
     // Limit to 10 digits (Iraqi mobile number without country code)
     if (digits.length > 10) {
       digits = digits.substring(0, 10);
     }
-    
+
     return digits;
   };
-  
+
   // Validate Iraqi phone number
   const validateIraqiPhone = (phone: string): boolean => {
     // Remove non-digits
     const digits = phone.replace(/\D/g, '');
-    
+
     // Iraqi mobile numbers: 10 digits starting with 7
     // Format: 7XX XXX XXXX where XX is the operator code
     const iraqiMobileRegex = /^7[0-9]{9}$/;
-    
+
     return iraqiMobileRegex.test(digits);
   };
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
-    
+
     if (!formData.customerName.trim()) {
       newErrors.customerName = 'الرجاء إدخال الاسم';
     }
-    
+
     if (!formData.customerPhone.trim()) {
       newErrors.customerPhone = 'الرجاء إدخال رقم الهاتف';
     } else if (!validateIraqiPhone(formData.customerPhone)) {
       newErrors.customerPhone = 'رقم الهاتف غير صحيح. يجب أن يكون 10 أرقام تبدأ بـ 7';
     }
-    
+
     if (!formData.customerAddress.trim()) {
       newErrors.customerAddress = 'الرجاء إدخال العنوان بالتفصيل';
     }
-    
+
     if (!formData.customerCity.trim()) {
       newErrors.customerCity = 'الرجاء إدخال المدينة';
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) return;
-    
+
     setIsSubmitting(true);
-    
+
     const result = await placeOrder(formData);
-    
+
     if (result.success && result.order) {
       setOrderId(result.order.id.slice(-6).toUpperCase());
       setOrderSuccess(true);
     } else {
       alert(result.error || 'حدث خطأ، يرجى المحاولة مرة أخرى');
     }
-    
+
     setIsSubmitting(false);
   };
 
@@ -239,9 +239,8 @@ const Checkout: React.FC = () => {
                       value={formData.customerName}
                       onChange={(e) => setFormData({ ...formData, customerName: e.target.value })}
                       placeholder="أدخل اسمك الكامل"
-                      className={`w-full pr-12 pl-4 py-3 rounded-xl bg-white/5 border text-dorada-cream placeholder-dorada-cream/30 focus:border-dorada-gold focus:outline-none transition-colors ${
-                        errors.customerName ? 'border-red-500/50' : 'border-white/10'
-                      }`}
+                      className={`w-full pr-12 pl-4 py-3 rounded-xl bg-white/5 border text-dorada-cream placeholder-dorada-cream/30 focus:border-dorada-gold focus:outline-none transition-colors ${errors.customerName ? 'border-red-500/50' : 'border-white/10'
+                        }`}
                     />
                   </div>
                   {errors.customerName && (
@@ -274,9 +273,8 @@ const Checkout: React.FC = () => {
                       }}
                       placeholder="770 123 4567"
                       maxLength={10}
-                      className={`flex-1 pr-4 pl-4 py-3 rounded-l-xl bg-white/5 border text-dorada-cream placeholder-dorada-cream/30 focus:border-dorada-gold focus:outline-none transition-colors ${
-                        errors.customerPhone ? 'border-red-500/50' : 'border-white/10'
-                      }`}
+                      className={`flex-1 pr-4 pl-4 py-3 rounded-l-xl bg-white/5 border text-dorada-cream placeholder-dorada-cream/30 focus:border-dorada-gold focus:outline-none transition-colors ${errors.customerPhone ? 'border-red-500/50' : 'border-white/10'
+                        }`}
                     />
                   </div>
                   <p className="mt-2 text-xs text-dorada-cream/40">
@@ -302,9 +300,8 @@ const Checkout: React.FC = () => {
                       value={formData.customerCity}
                       onChange={(e) => setFormData({ ...formData, customerCity: e.target.value })}
                       placeholder="مثال: بغداد، أربيل، البصرة..."
-                      className={`w-full pr-12 pl-4 py-3 rounded-xl bg-white/5 border text-dorada-cream placeholder-dorada-cream/30 focus:border-dorada-gold focus:outline-none transition-colors ${
-                        errors.customerCity ? 'border-red-500/50' : 'border-white/10'
-                      }`}
+                      className={`w-full pr-12 pl-4 py-3 rounded-xl bg-white/5 border text-dorada-cream placeholder-dorada-cream/30 focus:border-dorada-gold focus:outline-none transition-colors ${errors.customerCity ? 'border-red-500/50' : 'border-white/10'
+                        }`}
                     />
                   </div>
                   {errors.customerCity && (
@@ -327,9 +324,8 @@ const Checkout: React.FC = () => {
                       onChange={(e) => setFormData({ ...formData, customerAddress: e.target.value })}
                       placeholder="المنطقة، الحي، أقرب نقطة دالة، رقم المنزل..."
                       rows={4}
-                      className={`w-full pr-12 pl-4 py-3 rounded-xl bg-white/5 border text-dorada-cream placeholder-dorada-cream/30 focus:border-dorada-gold focus:outline-none transition-colors resize-none ${
-                        errors.customerAddress ? 'border-red-500/50' : 'border-white/10'
-                      }`}
+                      className={`w-full pr-12 pl-4 py-3 rounded-xl bg-white/5 border text-dorada-cream placeholder-dorada-cream/30 focus:border-dorada-gold focus:outline-none transition-colors resize-none ${errors.customerAddress ? 'border-red-500/50' : 'border-white/10'
+                        }`}
                     />
                   </div>
                   {errors.customerAddress && (
@@ -399,14 +395,14 @@ const Checkout: React.FC = () => {
                   </div>
                   <div className="flex justify-between text-dorada-cream/60 text-sm">
                     <span>الشحن</span>
-                    <span className="text-green-400">مجاني</span>
+                    <span className="text-dorada-cream">{formatPrice(5000)}</span>
                   </div>
                 </div>
 
                 <div className="border-t border-white/10 mt-4 pt-4">
                   <div className="flex justify-between items-center">
                     <span className="text-lg text-dorada-cream font-medium">المجموع الكلي</span>
-                    <span className="text-2xl font-bold gold-text">{formatPrice(cart.total)}</span>
+                    <span className="text-2xl font-bold gold-text">{formatPrice(cart.total + 5000)}</span>
                   </div>
                 </div>
 

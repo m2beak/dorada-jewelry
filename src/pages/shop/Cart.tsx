@@ -1,10 +1,10 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  ShoppingBag, 
-  Trash2, 
-  Minus, 
-  Plus, 
+import {
+  ShoppingBag,
+  Trash2,
+  Minus,
+  Plus,
   Crown,
   ChevronLeft,
   ArrowRight,
@@ -179,7 +179,7 @@ const Cart: React.FC = () => {
                 <h2 className="font-serif text-xl font-bold text-dorada-cream mb-6">
                   ملخص الطلب
                 </h2>
-                
+
                 <div className="space-y-3 mb-6">
                   <div className="flex justify-between text-dorada-cream/60">
                     <span>عدد المنتجات</span>
@@ -191,14 +191,14 @@ const Cart: React.FC = () => {
                   </div>
                   <div className="flex justify-between text-dorada-cream/60">
                     <span>الشحن</span>
-                    <span className="text-green-400">مجاني</span>
+                    <span className="text-dorada-cream">{formatPrice(5000)}</span>
                   </div>
                 </div>
 
                 <div className="border-t border-white/10 pt-4 mb-6">
                   <div className="flex justify-between items-center">
                     <span className="text-lg text-dorada-cream font-medium">المجموع الكلي</span>
-                    <span className="text-2xl font-bold gold-text">{formatPrice(cart.total)}</span>
+                    <span className="text-2xl font-bold gold-text">{formatPrice(cart.total + 5000)}</span>
                   </div>
                 </div>
 
@@ -212,7 +212,7 @@ const Cart: React.FC = () => {
 
                 <div className="mt-6 flex items-center justify-center gap-2 text-dorada-cream/40 text-sm">
                   <Package className="w-4 h-4" />
-                  <span>الشحن مجاني لجميع الطلبات</span>
+                  <span>توصيل سريع لجميع المحافظات</span>
                 </div>
               </div>
             </div>
