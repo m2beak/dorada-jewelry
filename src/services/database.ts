@@ -37,19 +37,19 @@ class SessionManager {
   private acquireLock(): void {
     const now = Date.now();
     const lock = localStorage.getItem(DB_KEYS.SESSION_LOCK);
-    
+
     if (!lock) {
-      localStorage.setItem(DB_KEYS.SESSION_LOCK, JSON.stringify({ 
-        sessionId: this.sessionId, 
-        timestamp: now 
+      localStorage.setItem(DB_KEYS.SESSION_LOCK, JSON.stringify({
+        sessionId: this.sessionId,
+        timestamp: now
       }));
     }
   }
 
   public refreshLock(): void {
-    localStorage.setItem(DB_KEYS.SESSION_LOCK, JSON.stringify({ 
-      sessionId: this.sessionId, 
-      timestamp: Date.now() 
+    localStorage.setItem(DB_KEYS.SESSION_LOCK, JSON.stringify({
+      sessionId: this.sessionId,
+      timestamp: Date.now()
     }));
   }
 }
@@ -292,7 +292,7 @@ export const updateProduct = (id: string, updates: Partial<Product>): { success:
     const products = getProducts();
     const index = products.findIndex(p => p.id === id);
     if (index === -1) return { success: false, error: 'المنتج غير موجود' };
-    
+
     products[index] = {
       ...products[index],
       ...updates,
@@ -376,11 +376,11 @@ export const updateCategory = (id: string, name: string, nameAr: string): { succ
     const categories = getCategories();
     const index = categories.findIndex(c => c.id === id);
     if (index === -1) return { success: false, error: 'التصنيف غير موجود' };
-    
-    categories[index] = { 
-      ...categories[index], 
-      name: sanitizeInput(name), 
-      nameAr: sanitizeInput(nameAr) 
+
+    categories[index] = {
+      ...categories[index],
+      name: sanitizeInput(name),
+      nameAr: sanitizeInput(nameAr)
     };
     localStorage.setItem(DB_KEYS.CATEGORIES, JSON.stringify(categories));
     return { success: true, category: categories[index] };
@@ -438,20 +438,16 @@ export const createOrder = (order: Omit<Order, 'id' | 'createdAt' | 'updatedAt'>
     };
     orders.unshift(newOrder);
     localStorage.setItem(DB_KEYS.ORDERS, JSON.stringify(orders));
-    
-    // Update product quantities
+
+    // Verify stock availability without deducting
     const products = getProducts();
-    order.items.forEach(orderItem => {
-      const productIndex = products.findIndex(p => p.id === orderItem.productId);
-      if (productIndex !== -1) {
-        products[productIndex].quantity -= orderItem.quantity;
-        if (products[productIndex].quantity <= 0) {
-          products[productIndex].inStock = false;
-        }
+    for (const item of order.items) {
+      const product = products.find(p => p.id === item.productId);
+      if (product && product.quantity < item.quantity) {
+        return { success: false, error: `الكمية المطلوبة غير متوفرة لـ ${product.nameAr}` };
       }
-    });
-    localStorage.setItem(DB_KEYS.PRODUCTS, JSON.stringify(products));
-    
+    }
+
     return { success: true, order: newOrder };
   } catch (error) {
     console.error('Error creating order:', error);
@@ -464,7 +460,57 @@ export const updateOrderStatus = (id: string, status: Order['status'], statusAr:
     const orders = getOrders();
     const index = orders.findIndex(o => o.id === id);
     if (index === -1) return { success: false, error: 'الطلب غير موجود' };
-    
+
+    const order = orders[index];
+    const oldStatus = order.status;
+
+    // Stock Logic
+    const isStockReducedStatus = (s: string) => ['processing', 'shipped', 'delivered'].includes(s);
+    const wasReduced = isStockReducedStatus(oldStatus);
+    const willReduce = isStockReducedStatus(status);
+
+    const products = getProducts();
+    let productsChanged = false;
+
+    // Case 1: Deduct Stock (Pending -> Processing/Shipped)
+    if (!wasReduced && willReduce) {
+      // Check stock first
+      for (const item of order.items) {
+        const product = products.find(p => p.id === item.productId);
+        if (!product || product.quantity < item.quantity) {
+          return {
+            success: false,
+            error: `لا يمكن قبول الطلب. الكمية غير متوفرة حالياً للمنتج: ${item.nameAr}`
+          };
+        }
+      }
+
+      // Deduct
+      order.items.forEach(item => {
+        const pIndex = products.findIndex(p => p.id === item.productId);
+        if (pIndex !== -1) {
+          products[pIndex].quantity -= item.quantity;
+          if (products[pIndex].quantity <= 0) products[pIndex].inStock = false;
+          productsChanged = true;
+        }
+      });
+    }
+    // Case 2: Return Stock (Processing/Shipped -> Cancelled/Pending)
+    else if (wasReduced && !willReduce) {
+      order.items.forEach(item => {
+        const pIndex = products.findIndex(p => p.id === item.productId);
+        if (pIndex !== -1) {
+          products[pIndex].quantity += item.quantity;
+          if (products[pIndex].quantity > 0) products[pIndex].inStock = true;
+          productsChanged = true;
+        }
+      });
+    }
+
+    if (productsChanged) {
+      localStorage.setItem(DB_KEYS.PRODUCTS, JSON.stringify(products));
+    }
+
     orders[index] = {
       ...orders[index],
       status,
@@ -497,7 +543,7 @@ export const loginAdmin = (username: string, password: string): boolean => {
   try {
     const data = localStorage.getItem(DB_KEYS.ADMIN);
     if (!data) return false;
-    
+
     const admin: Admin = JSON.parse(data);
     if (admin.username === username && verifyPassword(password, admin.password)) {
       localStorage.setItem(DB_KEYS.IS_ADMIN, 'true');
@@ -521,7 +567,7 @@ export const logoutAdmin = (): void => {
 export const isAdminLoggedIn = (): boolean => {
   const isAdmin = localStorage.getItem(DB_KEYS.IS_ADMIN) === 'true';
   const expiry = localStorage.getItem('dorada_admin_expiry');
-  
+
   if (isAdmin && expiry) {
     if (Date.now() > parseInt(expiry)) {
       logoutAdmin();
@@ -536,16 +582,16 @@ export const changeAdminPassword = (currentPassword: string, newPassword: string
   try {
     const data = localStorage.getItem(DB_KEYS.ADMIN);
     if (!data) return { success: false, error: 'المسؤول غير موجود' };
-    
+
     const admin: Admin = JSON.parse(data);
     if (!verifyPassword(currentPassword, admin.password)) {
       return { success: false, error: 'كلمة المرور الحالية غير صحيحة' };
     }
-    
+
     if (newPassword.length < 6) {
       return { success: false, error: 'كلمة المرور الجديدة يجب أن تكون 6 أحرف على الأقل' };
     }
-    
+
     admin.password = hashPassword(newPassword);
     localStorage.setItem(DB_KEYS.ADMIN, JSON.stringify(admin));
     return { success: true };
@@ -618,21 +664,21 @@ export const addToWishlist = (productId: string): { success: boolean; error?: st
   try {
     const wishlist = getWishlist();
     const exists = wishlist.items.find(item => item.product.id === productId);
-    
+
     if (exists) {
       return { success: false, error: 'المنتج موجود في المفضلة' };
     }
-    
+
     const product = getProductById(productId);
     if (!product) {
       return { success: false, error: 'المنتج غير موجود' };
     }
-    
+
     wishlist.items.push({
       product,
       addedAt: new Date().toISOString(),
     });
-    
+
     localStorage.setItem(DB_KEYS.WISHLIST, JSON.stringify(wishlist));
     return { success: true };
   } catch (error) {
