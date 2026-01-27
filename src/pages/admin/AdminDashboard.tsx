@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  LayoutDashboard, 
-  Package, 
-  ShoppingCart, 
-  Settings, 
-  LogOut, 
-  Plus, 
-  Edit2, 
-  Trash2, 
+import {
+  LayoutDashboard,
+  Package,
+  ShoppingCart,
+  Settings,
+  LogOut,
+  Plus,
+  Edit2,
+  Trash2,
   Search,
   X,
   Check,
@@ -30,12 +30,12 @@ import {
   ChevronDown,
   ChevronUp,
 } from 'lucide-react';
-import { 
-  getProducts, 
-  getOrders, 
+import {
+  getProducts,
+  getOrders,
   getCategories,
-  addProduct, 
-  updateProduct, 
+  addProduct,
+  updateProduct,
   deleteProduct,
   addCategory,
   updateCategory,
@@ -59,22 +59,22 @@ const AdminDashboard: React.FC = () => {
   const { setAdmin, refreshProducts, showToast } = useApp();
   const [activeTab, setActiveTab] = useState<'products' | 'orders' | 'categories' | 'settings'>('products');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  
+
   // Products State
   const [products, setProducts] = useState<Product[]>([]);
   const [productSearch, setProductSearch] = useState('');
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  
+
   // Orders State
   const [orders, setOrders] = useState<Order[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
-  
+
   // Categories State
   const [categories, setCategories] = useState<Category[]>([]);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
-  
+
   // Telegram Config State
   const [telegramConfig, setTelegramConfig] = useState({ botToken: '', chatId: '', enabled: false });
   const [isTestingTelegram, setIsTestingTelegram] = useState(false);
@@ -82,10 +82,14 @@ const AdminDashboard: React.FC = () => {
 
   // Load data
   useEffect(() => {
-    setProducts(getProducts());
-    setOrders(getOrders());
-    setCategories(getCategories());
-    setTelegramConfig(getTelegramConfig());
+    const loadData = async () => {
+      setProducts(await getProducts());
+      setOrders(await getOrders());
+      setCategories(await getCategories());
+      // Telegram config is still local
+      setTelegramConfig(getTelegramConfig());
+    };
+    loadData();
   }, []);
 
   // Get bot info when token changes
@@ -114,7 +118,7 @@ const AdminDashboard: React.FC = () => {
     } else {
       result = addProduct(productData);
     }
-    
+
     if (result.success) {
       setProducts(getProducts());
       refreshProducts();
@@ -147,7 +151,7 @@ const AdminDashboard: React.FC = () => {
     } else {
       result = addCategory(name, nameAr);
     }
-    
+
     if (result.success) {
       setCategories(getCategories());
       setIsCategoryModalOpen(false);
@@ -202,7 +206,7 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
-  const filteredProducts = products.filter(p => 
+  const filteredProducts = products.filter(p =>
     p.nameAr.toLowerCase().includes(productSearch.toLowerCase()) ||
     p.name.toLowerCase().includes(productSearch.toLowerCase()) ||
     p.sku.toLowerCase().includes(productSearch.toLowerCase())
@@ -227,10 +231,9 @@ const AdminDashboard: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-dorada-blue via-[#1a2a3d] to-[#0d1a26]" dir="rtl">
       {/* Sidebar */}
-      <aside 
-        className={`fixed top-0 right-0 h-full z-40 transition-all duration-300 ${
-          isSidebarOpen ? 'w-64' : 'w-0 overflow-hidden'
-        }`}
+      <aside
+        className={`fixed top-0 right-0 h-full z-40 transition-all duration-300 ${isSidebarOpen ? 'w-64' : 'w-0 overflow-hidden'
+          }`}
       >
         <div className="h-full glass-card border-l border-white/10 rounded-none">
           {/* Logo */}
@@ -257,11 +260,10 @@ const AdminDashboard: React.FC = () => {
               <button
                 key={item.id}
                 onClick={() => setActiveTab(item.id as any)}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
-                  activeTab === item.id
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === item.id
                     ? 'bg-dorada-gold/20 text-dorada-gold border border-dorada-gold/30'
                     : 'text-dorada-cream/60 hover:bg-white/5 hover:text-dorada-cream'
-                }`}
+                  }`}
               >
                 <item.icon className="w-5 h-5" />
                 <span className="font-sans text-sm">{item.label}</span>
@@ -369,7 +371,7 @@ const AdminDashboard: React.FC = () => {
                           {product.nameAr}
                         </h3>
                         <p className="text-sm text-dorada-cream/50 mb-2">{product.categoryAr}</p>
-                        
+
                         {/* Features Preview */}
                         {product.features && product.features.length > 0 && (
                           <div className="flex flex-wrap gap-1 mb-3">
@@ -741,7 +743,7 @@ const ProductModal: React.FC<{
           </button>
         </div>
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          
+
           {/* Basic Info */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -816,8 +818,8 @@ const ProductModal: React.FC<{
                 value={formData.quantity}
                 onChange={(e) => {
                   const qty = Number(e.target.value);
-                  setFormData({ 
-                    ...formData, 
+                  setFormData({
+                    ...formData,
                     quantity: qty,
                     inStock: qty > 0
                   });
@@ -896,7 +898,7 @@ const ProductModal: React.FC<{
               </span>
               {showFeaturesSection ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
             </button>
-            
+
             {showFeaturesSection && (
               <div className="space-y-4">
                 {/* Quick Specs */}
@@ -982,7 +984,7 @@ const ProductModal: React.FC<{
                       + إضافة ميزة
                     </button>
                   </div>
-                  
+
                   <div className="space-y-2">
                     {formData.features.map((feature, index) => (
                       <div key={feature.id} className="flex gap-2">
@@ -1086,7 +1088,7 @@ const MultiImageUpload: React.FC<{
     }
 
     setIsUploading(false);
-    
+
     // Reset file input
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
@@ -1185,7 +1187,7 @@ const MultiImageUpload: React.FC<{
             </>
           )}
         </button>
-        
+
         <p className="text-xs text-dorada-cream/40">
           JPG, PNG, WebP - الحد الأقصى 5 ميجابايت للصورة
         </p>

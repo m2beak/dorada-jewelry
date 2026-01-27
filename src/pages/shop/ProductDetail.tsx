@@ -35,18 +35,22 @@ const ProductDetail: React.FC = () => {
 
   useEffect(() => {
     if (id) {
-      const prod = getProductById(id);
-      if (prod) {
-        setProduct(prod);
-        setQuantity(1);
-        // Add to recently viewed
-        addToRecentlyViewed(id);
-        // Get related products from same category
-        const related = getProductsByCategory(prod.category)
-          .filter(p => p.id !== prod.id)
-          .slice(0, 4);
-        setRelatedProducts(related);
-      }
+      const loadProduct = async () => {
+        const prod = await getProductById(id);
+        if (prod) {
+          setProduct(prod);
+          setQuantity(1);
+          // Add to recently viewed
+          addToRecentlyViewed(id);
+          // Get related products from same category
+          const allCategoryProducts = await getProductsByCategory(prod.category);
+          const related = allCategoryProducts
+            .filter(p => p.id !== prod.id)
+            .slice(0, 4);
+          setRelatedProducts(related);
+        }
+      };
+      loadProduct();
     }
   }, [id]);
 
@@ -223,10 +227,10 @@ const ProductDetail: React.FC = () => {
                   onClick={handleAddToCart}
                   disabled={isOutOfStock || isAdded}
                   className={`flex-1 px-8 py-4 rounded-full font-semibold transition-all flex items-center justify-center gap-2 ${isAdded
-                      ? 'bg-green-500/20 text-green-400 border border-green-500/30'
-                      : isOutOfStock
-                        ? 'bg-dorada-cream/10 text-dorada-cream/40 cursor-not-allowed'
-                        : 'gold-btn'
+                    ? 'bg-green-500/20 text-green-400 border border-green-500/30'
+                    : isOutOfStock
+                      ? 'bg-dorada-cream/10 text-dorada-cream/40 cursor-not-allowed'
+                      : 'gold-btn'
                     }`}
                 >
                   {isAdded ? (
@@ -250,8 +254,8 @@ const ProductDetail: React.FC = () => {
                 <button
                   onClick={handleWishlistToggle}
                   className={`px-4 py-4 rounded-full border-2 transition-all ${isInWishlist
-                      ? 'bg-red-500 border-red-500 text-white'
-                      : 'border-dorada-cream/30 text-dorada-cream hover:border-dorada-gold hover:text-dorada-gold'
+                    ? 'bg-red-500 border-red-500 text-white'
+                    : 'border-dorada-cream/30 text-dorada-cream hover:border-dorada-gold hover:text-dorada-gold'
                     }`}
                 >
                   <Heart className={`w-5 h-5 ${isInWishlist ? 'fill-current' : ''}`} />

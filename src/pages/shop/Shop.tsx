@@ -33,8 +33,13 @@ const Shop: React.FC = () => {
   const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
 
   useEffect(() => {
-    setCategories(getCategories());
-    setProducts(getFeaturedProducts());
+    const fetchData = async () => {
+      const cats = await getCategories();
+      setCategories(cats);
+      const feats = await getFeaturedProducts();
+      setProducts(feats);
+    };
+    fetchData();
   }, []);
 
   useEffect(() => {
@@ -46,11 +51,16 @@ const Shop: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (selectedCategory) {
-      setProducts(getProductsByCategory(selectedCategory));
-    } else {
-      setProducts(getFeaturedProducts());
-    }
+    const fetchProducts = async () => {
+      if (selectedCategory) {
+        const prods = await getProductsByCategory(selectedCategory);
+        setProducts(prods);
+      } else {
+        const feats = await getFeaturedProducts();
+        setProducts(feats);
+      }
+    };
+    fetchProducts();
   }, [selectedCategory]);
 
   const filteredProducts = products.filter(p =>
@@ -178,8 +188,8 @@ const Shop: React.FC = () => {
             <button
               onClick={() => setSelectedCategory(null)}
               className={`px-6 py-2.5 rounded-full text-sm font-medium transition-all ${selectedCategory === null
-                  ? 'bg-dorada-gold text-dorada-blue'
-                  : 'glass-card text-dorada-cream hover:border-dorada-gold/50'
+                ? 'bg-dorada-gold text-dorada-blue'
+                : 'glass-card text-dorada-cream hover:border-dorada-gold/50'
                 }`}
             >
               الكل
@@ -189,8 +199,8 @@ const Shop: React.FC = () => {
                 key={cat.id}
                 onClick={() => setSelectedCategory(cat.name)}
                 className={`px-6 py-2.5 rounded-full text-sm font-medium transition-all ${selectedCategory === cat.name
-                    ? 'bg-dorada-gold text-dorada-blue'
-                    : 'glass-card text-dorada-cream hover:border-dorada-gold/50'
+                  ? 'bg-dorada-gold text-dorada-blue'
+                  : 'glass-card text-dorada-cream hover:border-dorada-gold/50'
                   }`}
               >
                 {cat.nameAr}
@@ -358,8 +368,8 @@ const ProductCard: React.FC<{
         <button
           onClick={(e) => onAddToWishlist(e, product.id)}
           className={`absolute top-3 left-3 p-2 rounded-full transition-all ${isInWishlist
-              ? 'bg-red-500 text-white'
-              : 'bg-black/50 text-white hover:bg-red-500/80'
+            ? 'bg-red-500 text-white'
+            : 'bg-black/50 text-white hover:bg-red-500/80'
             }`}
         >
           <Heart className={`w-4 h-4 ${isInWishlist ? 'fill-current' : ''}`} />

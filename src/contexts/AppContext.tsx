@@ -1,11 +1,11 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import type { Product, Cart, CartItem, User, Order, Wishlist, Toast } from '@/types';
-import { 
-  getProducts, 
-  getCart, 
-  saveCart, 
-  clearCart, 
-  getCurrentUser, 
+import {
+  getProducts,
+  getCart,
+  saveCart,
+  clearCart,
+  getCurrentUser,
   setCurrentUser,
   isAdminLoggedIn,
   createOrder,
@@ -13,6 +13,7 @@ import {
   initializeDatabase,
   getWishlist,
   addToWishlist,
+  addToWishlistWithProduct,
   removeFromWishlist,
   isInWishlist,
 } from '@/services/database';
@@ -22,7 +23,7 @@ interface AppContextType {
   // Products
   products: Product[];
   refreshProducts: () => void;
-  
+
   // Cart
   cart: Cart;
   addToCart: (product: Product, quantity?: number) => void;
@@ -30,22 +31,22 @@ interface AppContextType {
   updateCartItemQuantity: (productId: string, quantity: number) => void;
   clearCartItems: () => void;
   cartItemsCount: number;
-  
+
   // Wishlist
   wishlist: Wishlist;
   addToWishlistFn: (productId: string) => { success: boolean; error?: string };
   removeFromWishlistFn: (productId: string) => void;
   isInWishlistFn: (productId: string) => boolean;
   wishlistItemsCount: number;
-  
+
   // User
   currentUser: User | null;
   setUser: (user: User | null) => void;
-  
+
   // Admin
   isAdmin: boolean;
   setAdmin: (value: boolean) => void;
-  
+
   // Order
   placeOrder: (orderData: {
     customerName: string;
@@ -53,12 +54,12 @@ interface AppContextType {
     customerAddress: string;
     customerCity: string;
   }) => Promise<{ success: boolean; order?: Order; error?: string }>;
-  
+
   // Toast
   toasts: Toast[];
   showToast: (message: string, type?: 'success' | 'error' | 'info', duration?: number) => void;
   removeToast: (id: string) => void;
-  
+
   // Utils
   formatPrice: (price: number) => string;
 }
@@ -73,9 +74,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Products State
   const [products, setProducts] = useState<Product[]>([]);
-  
-  const refreshProducts = useCallback(() => {
-    setProducts(getProducts());
+  const [isLoading, setIsLoading] = useState(true);
+
+  const refreshProducts = useCallback(async () => {
+    setIsLoading(true);
+    const data = await getProducts();
+    setProducts(data);
+    setIsLoading(false);
   }, []);
 
   useEffect(() => {
@@ -84,7 +89,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Cart State
   const [cart, setCart] = useState<Cart>({ items: [], total: 0 });
-  
+
   useEffect(() => {
     setCart(getCart());
   }, []);
@@ -98,14 +103,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     const currentCart = getCart();
     const existingItem = currentCart.items.find((item: CartItem) => item.product.id === product.id);
-    
+
     // Check if adding would exceed available quantity
     const currentQuantity = existingItem ? existingItem.quantity : 0;
     if (currentQuantity + quantity > product.quantity) {
       showToast(`الكمية المتوفرة: ${product.quantity} فقط`, 'error');
       return;
     }
-    
+
     let newItems: CartItem[];
     if (existingItem) {
       newItems = currentCart.items.map((item: CartItem) =>
@@ -116,11 +121,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     } else {
       newItems = [...currentCart.items, { product, quantity }];
     }
-    
-    const newTotal = newItems.reduce((sum: number, item: CartItem) => 
+
+    const newTotal = newItems.reduce((sum: number, item: CartItem) =>
       sum + (item.product.price * item.quantity), 0
     );
-    
+
     const newCart = { items: newItems, total: newTotal };
     saveCart(newCart);
     setCart(newCart);
@@ -130,10 +135,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const removeFromCart = useCallback((productId: string) => {
     const currentCart = getCart();
     const newItems = currentCart.items.filter((item: CartItem) => item.product.id !== productId);
-    const newTotal = newItems.reduce((sum: number, item: CartItem) => 
+    const newTotal = newItems.reduce((sum: number, item: CartItem) =>
       sum + (item.product.price * item.quantity), 0
     );
-    
+
     const newCart = { items: newItems, total: newTotal };
     saveCart(newCart);
     setCart(newCart);
@@ -144,23 +149,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       removeFromCart(productId);
       return;
     }
-    
+
     const currentCart = getCart();
     const product = currentCart.items.find((item: CartItem) => item.product.id === productId)?.product;
-    
+
     if (product && quantity > product.quantity) {
       showToast(`الكمية المتوفرة: ${product.quantity} فقط`, 'error');
       return;
     }
-    
+
     const newItems = currentCart.items.map((item: CartItem) =>
       item.product.id === productId ? { ...item, quantity } : item
     );
-    
-    const newTotal = newItems.reduce((sum: number, item: CartItem) => 
+
+    const newTotal = newItems.reduce((sum: number, item: CartItem) =>
       sum + (item.product.price * item.quantity), 0
     );
-    
+
     const newCart = { items: newItems, total: newTotal };
     saveCart(newCart);
     setCart(newCart);
@@ -175,13 +180,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Wishlist State
   const [wishlist, setWishlist] = useState<Wishlist>({ items: [] });
-  
+
   useEffect(() => {
     setWishlist(getWishlist());
   }, []);
 
   const addToWishlistFn = useCallback((productId: string) => {
-    const result = addToWishlist(productId);
+    // Find the product from our state
+    const product = products.find(p => p.id === productId);
+    if (!product) {
+      showToast('المنتج غير موجود', 'error');
+      return { success: false, error: 'Not found' };
+    }
+
+    // Use our new Helper that accepts Product
+    const result = addToWishlistWithProduct(product);
+
     if (result.success) {
       setWishlist(getWishlist());
       showToast('تمت الإضافة إلى المفضلة', 'success');
@@ -191,7 +205,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       showToast(result.error || 'حدث خطأ', 'error');
     }
     return result;
-  }, []);
+  }, [products]);
 
   const removeFromWishlistFn = useCallback((productId: string) => {
     removeFromWishlist(productId);
@@ -207,7 +221,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // User State
   const [currentUser, setCurrentUserState] = useState<User | null>(null);
-  
+
   useEffect(() => {
     setCurrentUserState(getCurrentUser());
   }, []);
@@ -219,7 +233,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Admin State
   const [isAdmin, setIsAdmin] = useState(false);
-  
+
   useEffect(() => {
     setIsAdmin(isAdminLoggedIn());
   }, []);
@@ -235,7 +249,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const id = Math.random().toString(36).substring(7);
     const newToast: Toast = { id, message, type, duration };
     setToasts(prev => [...prev, newToast]);
-    
+
     setTimeout(() => {
       removeToast(id);
     }, duration);
@@ -253,7 +267,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     customerCity: string;
   }) => {
     const currentCart = getCart();
-    
+
     if (currentCart.items.length === 0) {
       return { success: false, error: 'السلة فارغة' };
     }
@@ -268,7 +282,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       sku: item.product.sku,
     }));
 
-    const result = createOrder({
+    const result = await createOrder({
       ...orderData,
       items: orderItems,
       total: currentCart.total,
