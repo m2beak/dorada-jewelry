@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  ShoppingBag, 
-  Search, 
-  Menu, 
-  X, 
+import {
+  ShoppingBag,
+  Search,
+  Menu,
+  X,
   Crown,
   Heart,
   Instagram,
@@ -27,7 +27,7 @@ const Shop: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isScrolled, setIsScrolled] = useState(false);
-  
+
   // Quick View Modal State
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
   const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
@@ -66,7 +66,7 @@ const Shop: React.FC = () => {
     e.stopPropagation();
     addToWishlistFn(productId);
   };
-  
+
   const handleQuickView = (e: React.MouseEvent, product: Product) => {
     e.stopPropagation();
     setQuickViewProduct(product);
@@ -76,9 +76,8 @@ const Shop: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-dorada-blue via-[#1a2a3d] to-[#0d1a26]" dir="rtl">
       {/* Navbar */}
-      <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-        isScrolled ? 'nav-glass py-3' : 'bg-transparent py-4'
-      }`}>
+      <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${isScrolled ? 'nav-glass py-3' : 'bg-transparent py-4'
+        }`}>
         <div className="w-full px-4 lg:px-8">
           <div className="flex items-center justify-between">
             {/* Logo */}
@@ -178,11 +177,10 @@ const Shop: React.FC = () => {
           <div className="flex flex-wrap gap-3 justify-center mb-12">
             <button
               onClick={() => setSelectedCategory(null)}
-              className={`px-6 py-2.5 rounded-full text-sm font-medium transition-all ${
-                selectedCategory === null
+              className={`px-6 py-2.5 rounded-full text-sm font-medium transition-all ${selectedCategory === null
                   ? 'bg-dorada-gold text-dorada-blue'
                   : 'glass-card text-dorada-cream hover:border-dorada-gold/50'
-              }`}
+                }`}
             >
               الكل
             </button>
@@ -190,11 +188,10 @@ const Shop: React.FC = () => {
               <button
                 key={cat.id}
                 onClick={() => setSelectedCategory(cat.name)}
-                className={`px-6 py-2.5 rounded-full text-sm font-medium transition-all ${
-                  selectedCategory === cat.name
+                className={`px-6 py-2.5 rounded-full text-sm font-medium transition-all ${selectedCategory === cat.name
                     ? 'bg-dorada-gold text-dorada-blue'
                     : 'glass-card text-dorada-cream hover:border-dorada-gold/50'
-                }`}
+                  }`}
               >
                 {cat.nameAr}
               </button>
@@ -262,7 +259,7 @@ const Shop: React.FC = () => {
                 <Phone className="w-7 h-7 text-dorada-gold" />
               </div>
               <h3 className="font-serif text-lg font-semibold text-dorada-cream mb-2">اتصل بنا</h3>
-              <p className="text-dorada-cream/60">0770-123-4567</p>
+              <p className="text-dorada-cream/60">07507078397</p>
             </div>
 
             {/* Location */}
@@ -271,7 +268,7 @@ const Shop: React.FC = () => {
                 <MapPin className="w-7 h-7 text-dorada-gold" />
               </div>
               <h3 className="font-serif text-lg font-semibold text-dorada-cream mb-2">الموقع</h3>
-              <p className="text-dorada-cream/60">بغداد، العراق</p>
+              <p className="text-dorada-cream/60">قريبا</p>
             </div>
           </div>
         </div>
@@ -288,7 +285,7 @@ const Shop: React.FC = () => {
             <p className="text-dorada-cream/40 text-sm text-center">
               © 2024 دورادا. جميع الحقوق محفوظة.
             </p>
-            <button 
+            <button
               onClick={() => navigate('/secure-access')}
               className="mt-4 md:mt-0 text-dorada-cream/20 hover:text-dorada-gold/50 text-xs transition-colors"
             >
@@ -297,7 +294,7 @@ const Shop: React.FC = () => {
           </div>
         </div>
       </footer>
-      
+
       {/* Quick View Modal */}
       <QuickViewModal
         product={quickViewProduct}
@@ -332,7 +329,7 @@ const ProductCard: React.FC<{
           alt={product.nameAr}
           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
         />
-        
+
         {/* Out of Stock Overlay */}
         {isOutOfStock && (
           <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
@@ -360,11 +357,10 @@ const ProductCard: React.FC<{
         {/* Wishlist Button */}
         <button
           onClick={(e) => onAddToWishlist(e, product.id)}
-          className={`absolute top-3 left-3 p-2 rounded-full transition-all ${
-            isInWishlist
+          className={`absolute top-3 left-3 p-2 rounded-full transition-all ${isInWishlist
               ? 'bg-red-500 text-white'
               : 'bg-black/50 text-white hover:bg-red-500/80'
-          }`}
+            }`}
         >
           <Heart className={`w-4 h-4 ${isInWishlist ? 'fill-current' : ''}`} />
         </button>

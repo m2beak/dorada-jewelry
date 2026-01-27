@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { 
-  ShoppingBag, 
-  Check, 
+import {
+  ShoppingBag,
+  Check,
   Crown,
   Minus,
   Plus,
@@ -165,11 +165,11 @@ const ProductDetail: React.FC = () => {
               <span className="inline-block w-fit px-4 py-1.5 rounded-full glass-card text-xs font-medium text-dorada-gold mb-4">
                 {product.categoryAr}
               </span>
-              
+
               <h1 className="font-serif text-3xl md:text-4xl font-bold text-dorada-cream mb-4">
                 {product.nameAr}
               </h1>
-              
+
               <p className="text-dorada-cream/60 mb-6 leading-relaxed">
                 {product.descriptionAr}
               </p>
@@ -222,13 +222,12 @@ const ProductDetail: React.FC = () => {
                 <button
                   onClick={handleAddToCart}
                   disabled={isOutOfStock || isAdded}
-                  className={`flex-1 px-8 py-4 rounded-full font-semibold transition-all flex items-center justify-center gap-2 ${
-                    isAdded
+                  className={`flex-1 px-8 py-4 rounded-full font-semibold transition-all flex items-center justify-center gap-2 ${isAdded
                       ? 'bg-green-500/20 text-green-400 border border-green-500/30'
                       : isOutOfStock
-                      ? 'bg-dorada-cream/10 text-dorada-cream/40 cursor-not-allowed'
-                      : 'gold-btn'
-                  }`}
+                        ? 'bg-dorada-cream/10 text-dorada-cream/40 cursor-not-allowed'
+                        : 'gold-btn'
+                    }`}
                 >
                   {isAdded ? (
                     <>
@@ -250,11 +249,10 @@ const ProductDetail: React.FC = () => {
                 {/* Wishlist Button */}
                 <button
                   onClick={handleWishlistToggle}
-                  className={`px-4 py-4 rounded-full border-2 transition-all ${
-                    isInWishlist
+                  className={`px-4 py-4 rounded-full border-2 transition-all ${isInWishlist
                       ? 'bg-red-500 border-red-500 text-white'
                       : 'border-dorada-cream/30 text-dorada-cream hover:border-dorada-gold hover:text-dorada-gold'
-                  }`}
+                    }`}
                 >
                   <Heart className={`w-5 h-5 ${isInWishlist ? 'fill-current' : ''}`} />
                 </button>
@@ -321,7 +319,7 @@ const ProductDetail: React.FC = () => {
           )}
         </div>
       </main>
-      
+
       {/* Recently Viewed */}
       <div className="px-4 lg:px-8">
         <RecentlyViewed currentProductId={id} formatPrice={formatPrice} />
@@ -360,7 +358,7 @@ const ProductDetail: React.FC = () => {
                 <Phone className="w-7 h-7 text-dorada-gold" />
               </div>
               <h3 className="font-serif text-lg font-semibold text-dorada-cream mb-2">اتصل بنا</h3>
-              <p className="text-dorada-cream/60">0770-123-4567</p>
+              <p className="text-dorada-cream/60">07507078397</p>
             </div>
 
             {/* Location */}
@@ -369,7 +367,7 @@ const ProductDetail: React.FC = () => {
                 <MapPin className="w-7 h-7 text-dorada-gold" />
               </div>
               <h3 className="font-serif text-lg font-semibold text-dorada-cream mb-2">الموقع</h3>
-              <p className="text-dorada-cream/60">بغداد، العراق</p>
+              <p className="text-dorada-cream/60">قريبا</p>
             </div>
           </div>
         </div>
