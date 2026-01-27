@@ -12,7 +12,7 @@ import {
   MapPin,
   Eye
 } from 'lucide-react';
-import { getCategories, getProductsByCategory, getFeaturedProducts } from '@/services/database';
+
 import { useApp } from '@/contexts/AppContext';
 import QuickViewModal from '@/components/QuickViewModal';
 import RecentlyViewed from '@/components/RecentlyViewed';
