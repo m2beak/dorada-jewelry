@@ -7,7 +7,8 @@ const supabaseKey = import.meta.env.VITE_SUPABASE_KEY;
 
 if (!supabaseUrl || !supabaseKey) {
     console.error('Missing Supabase credentials. Check your .env file.');
-    throw new Error('Missing Supabase credentials');
+    // Show an alert so the user knows what's wrong even if the UI doesn't render
+    alert('Critical Error: Supabase credentials missing! Please check your .env file and restart the server.');
 }
 
-export const supabase = createClient(supabaseUrl, supabaseKey);
+export const supabase = createClient(supabaseUrl || '', supabaseKey || '');
