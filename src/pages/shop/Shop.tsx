@@ -17,30 +17,24 @@ import { useApp } from '@/contexts/AppContext';
 import QuickViewModal from '@/components/QuickViewModal';
 import RecentlyViewed from '@/components/RecentlyViewed';
 import type { Product } from '@/types';
+import { getOptimizedUrl } from '@/utils/image';
+import { useProducts, useCategories } from '@/hooks/useProducts';
 
 const Shop: React.FC = () => {
   const navigate = useNavigate();
   const { cartItemsCount, addToCart, formatPrice, addToWishlistFn, isInWishlistFn, wishlistItemsCount } = useApp();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [categories, setCategories] = useState<{ id: string; name: string; nameAr: string }[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [products, setProducts] = useState<Product[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isScrolled, setIsScrolled] = useState(false);
+
+  // React Query Hooks
+  const { data: categories = [] } = useCategories();
+  const { data: products = [] } = useProducts(selectedCategory);
 
   // Quick View Modal State
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
   const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      const cats = await getCategories();
-      setCategories(cats);
-      const feats = await getFeaturedProducts();
-      setProducts(feats);
-    };
-    fetchData();
-  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -49,19 +43,6 @@ const Shop: React.FC = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-
-  useEffect(() => {
-    const fetchProducts = async () => {
-      if (selectedCategory) {
-        const prods = await getProductsByCategory(selectedCategory);
-        setProducts(prods);
-      } else {
-        const feats = await getFeaturedProducts();
-        setProducts(feats);
-      }
-    };
-    fetchProducts();
-  }, [selectedCategory]);
 
   const filteredProducts = products.filter(p =>
     p.nameAr.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -335,8 +316,9 @@ const ProductCard: React.FC<{
     <div className="glass-card overflow-hidden group cursor-pointer" onClick={onClick}>
       <div className="relative aspect-square overflow-hidden">
         <img
-          src={product.images[0]}
+          src={getOptimizedUrl(product.images[0], 500)}
           alt={product.nameAr}
+          loading="lazy"
           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
         />
 

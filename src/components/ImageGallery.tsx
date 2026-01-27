@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { getOptimizedUrl } from '@/utils/image';
 
 interface ImageGalleryProps {
   images: string[];
@@ -37,11 +38,12 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({ images, alt, className = ''
       {/* Main Image */}
       <div className="relative w-full h-full overflow-hidden rounded-xl">
         <img
-          src={images[currentIndex]}
+          src={getOptimizedUrl(images[currentIndex], 800)}
           alt={`${alt} - ${currentIndex + 1}`}
+          loading="lazy"
           className="w-full h-full object-cover transition-transform duration-500"
         />
-        
+
         {/* Navigation Arrows */}
         {images.length > 1 && (
           <>
@@ -75,14 +77,13 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({ images, alt, className = ''
             <button
               key={index}
               onClick={() => goToSlide(index)}
-              className={`w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${
-                index === currentIndex
-                  ? 'border-dorada-gold'
-                  : 'border-transparent hover:border-dorada-gold/50'
-              }`}
+              className={`w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${index === currentIndex
+                ? 'border-dorada-gold'
+                : 'border-transparent hover:border-dorada-gold/50'
+                }`}
             >
               <img
-                src={image}
+                src={getOptimizedUrl(image, 150)}
                 alt={`${alt} thumbnail ${index + 1}`}
                 className="w-full h-full object-cover"
               />

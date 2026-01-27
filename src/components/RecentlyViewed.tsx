@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Clock } from 'lucide-react';
 import { getProductById } from '@/services/database';
 import type { Product } from '@/types';
+import { getOptimizedUrl } from '@/utils/image';
 
 interface RecentlyViewedProps {
   currentProductId?: string;
@@ -91,8 +92,9 @@ const RecentlyViewed: React.FC<RecentlyViewedProps> = ({ currentProductId, forma
             >
               <div className="relative aspect-square overflow-hidden">
                 <img
-                  src={product.images[0]}
+                  src={getOptimizedUrl(product.images[0], 400)}
                   alt={product.nameAr}
+                  loading="lazy"
                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                 />
                 {product.quantity === 0 && (
