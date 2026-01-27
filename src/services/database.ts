@@ -532,10 +532,10 @@ export const updateTelegramConfig = async (config: TelegramConfig): Promise<{ su
 
 
 
-function validateOrder(order: any): string | null {
+function validateOrder(order: Partial<Order>): string | null {
   if (!order.customerName) return 'اسم العميل مطلوب';
   if (!order.customerPhone) return 'رقم الهاتف مطلوب';
-  if (order.items.length === 0) return 'السلة فارغة';
+  if (!order.items || order.items.length === 0) return 'السلة فارغة';
   return null;
 }
 

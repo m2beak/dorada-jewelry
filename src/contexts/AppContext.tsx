@@ -16,7 +16,7 @@ import {
   removeFromWishlist,
   isInWishlist,
 } from '@/services/database';
-import { sendOrderNotification } from '@/services/telegram';
+
 
 interface AppContextType {
   // Products
@@ -290,12 +290,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return { success: false, error: result.error || 'حدث خطأ أثناء إنشاء الطلب' };
     }
 
-    // Send Telegram notification
-    try {
-      await sendOrderNotification(result.order);
-    } catch (error) {
-      console.error('Failed to send Telegram notification:', error);
-    }
+    // Telegram notification is now handled server-side (in SQL)
+
 
     // Refresh products to update quantities
     refreshProducts();
