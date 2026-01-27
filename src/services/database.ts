@@ -1,15 +1,4 @@
-import { v4 as uuidv4 } from 'uuid';
-import {
-  Product,
-  Category,
-  User,
-  Cart,
-  CartItem,
-  Order,
-  Admin,
-  TelegramConfig,
-  Wishlist
-} from '@/types';
+import { type Product, type Category, type User, type Cart, type Order, type Admin, type TelegramConfig, type Wishlist } from '@/types';
 import { supabase } from '@/lib/supabase';
 
 // Keys for LocalStorage
@@ -368,7 +357,7 @@ export const updateOrderStatus = async (id: string, status: Order['status'], sta
 
 // --- Admin Operations (Auth Remains Local for now + Hardcoded Super User) ---
 
-export const setupAdmin = (username: string, password: string): { success: boolean; error?: string } => {
+export const setupAdmin = (_username: string, _password: string): { success: boolean; error?: string } => {
   return { success: false, error: 'تم تعطيل التسجيل. استخدم حساب المسؤول العام.' };
 };
 

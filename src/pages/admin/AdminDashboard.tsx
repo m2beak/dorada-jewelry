@@ -111,16 +111,16 @@ const AdminDashboard: React.FC = () => {
   };
 
   // Product Handlers
-  const handleSaveProduct = (productData: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>) => {
+  const handleSaveProduct = async (productData: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>) => {
     let result;
     if (editingProduct) {
-      result = updateProduct(editingProduct.id, productData);
+      result = await updateProduct(editingProduct.id, productData);
     } else {
-      result = addProduct(productData);
+      result = await addProduct(productData);
     }
 
     if (result.success) {
-      setProducts(getProducts());
+      setProducts(await getProducts());
       refreshProducts();
       setIsProductModalOpen(false);
       setEditingProduct(null);
@@ -130,11 +130,11 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
-  const handleDeleteProduct = (id: string) => {
+  const handleDeleteProduct = async (id: string) => {
     if (confirm('هل أنت متأكد من حذف هذا المنتج؟')) {
-      const result = deleteProduct(id);
+      const result = await deleteProduct(id);
       if (result.success) {
-        setProducts(getProducts());
+        setProducts(await getProducts());
         refreshProducts();
         showToast('تم حذف المنتج', 'success');
       } else {
@@ -144,16 +144,16 @@ const AdminDashboard: React.FC = () => {
   };
 
   // Category Handlers
-  const handleSaveCategory = (name: string, nameAr: string) => {
+  const handleSaveCategory = async (name: string, nameAr: string) => {
     let result;
     if (editingCategory) {
-      result = updateCategory(editingCategory.id, name, nameAr);
+      result = await updateCategory(editingCategory.id, name, nameAr);
     } else {
-      result = addCategory(name, nameAr);
+      result = await addCategory(name, nameAr);
     }
 
     if (result.success) {
-      setCategories(getCategories());
+      setCategories(await getCategories());
       setIsCategoryModalOpen(false);
       setEditingCategory(null);
       showToast(editingCategory ? 'تم تحديث التصنيف' : 'تم إضافة التصنيف', 'success');
@@ -162,11 +162,11 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
-  const handleDeleteCategory = (id: string) => {
+  const handleDeleteCategory = async (id: string) => {
     if (confirm('هل أنت متأكد من حذف هذا التصنيف؟')) {
-      const result = deleteCategory(id);
+      const result = await deleteCategory(id);
       if (result.success) {
-        setCategories(getCategories());
+        setCategories(await getCategories());
         showToast('تم حذف التصنيف', 'success');
       } else {
         showToast(result.error || 'حدث خطأ أثناء الحذف', 'error');
@@ -175,10 +175,10 @@ const AdminDashboard: React.FC = () => {
   };
 
   // Order Handlers
-  const handleUpdateOrderStatus = (orderId: string, status: Order['status'], statusAr: string) => {
-    const result = updateOrderStatus(orderId, status, statusAr);
+  const handleUpdateOrderStatus = async (orderId: string, status: Order['status'], statusAr: string) => {
+    const result = await updateOrderStatus(orderId, status, statusAr);
     if (result.success) {
-      setOrders(getOrders());
+      setOrders(await getOrders());
       showToast('تم تحديث حالة الطلب', 'success');
     } else {
       showToast(result.error || 'حدث خطأ أثناء تحديث الحالة', 'error');
@@ -261,8 +261,8 @@ const AdminDashboard: React.FC = () => {
                 key={item.id}
                 onClick={() => setActiveTab(item.id as any)}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === item.id
-                    ? 'bg-dorada-gold/20 text-dorada-gold border border-dorada-gold/30'
-                    : 'text-dorada-cream/60 hover:bg-white/5 hover:text-dorada-cream'
+                  ? 'bg-dorada-gold/20 text-dorada-gold border border-dorada-gold/30'
+                  : 'text-dorada-cream/60 hover:bg-white/5 hover:text-dorada-cream'
                   }`}
               >
                 <item.icon className="w-5 h-5" />
