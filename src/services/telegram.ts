@@ -12,8 +12,11 @@ export const sendOrderNotification = async (order: Order): Promise<{ success: bo
   const message = formatOrderMessage(order);
 
   try {
-    // Use a CORS proxy or direct API call
-    const response = await fetch(`https://api.telegram.org/bot${config.botToken}/sendMessage`, {
+    // Use a CORS proxy to bypass browser restrictions
+    const PROXY_URL = 'https://corsproxy.io/?';
+    const TELEGRAM_URL = `https://api.telegram.org/bot${config.botToken}/sendMessage`;
+
+    const response = await fetch(PROXY_URL + encodeURIComponent(TELEGRAM_URL), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -81,7 +84,10 @@ export const testTelegramConnection = async (botToken: string, chatId: string): 
   }
 
   try {
-    const response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+    const PROXY_URL = 'https://corsproxy.io/?';
+    const TELEGRAM_URL = `https://api.telegram.org/bot${botToken}/sendMessage`;
+
+    const response = await fetch(PROXY_URL + encodeURIComponent(TELEGRAM_URL), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -109,7 +115,10 @@ export const testTelegramConnection = async (botToken: string, chatId: string): 
 // Get bot info to verify token
 export const getBotInfo = async (botToken: string): Promise<{ success: boolean; username?: string; error?: string }> => {
   try {
-    const response = await fetch(`https://api.telegram.org/bot${botToken}/getMe`);
+    const PROXY_URL = 'https://corsproxy.io/?';
+    const TELEGRAM_URL = `https://api.telegram.org/bot${botToken}/getMe`;
+
+    const response = await fetch(PROXY_URL + encodeURIComponent(TELEGRAM_URL));
     const data = await response.json();
 
     if (data.ok) {
