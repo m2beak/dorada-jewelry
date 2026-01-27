@@ -2,15 +2,15 @@ import { getTelegramConfig, formatPrice } from './database';
 import type { Order } from '@/types';
 
 export const sendOrderNotification = async (order: Order): Promise<{ success: boolean; messageId?: number; error?: string }> => {
-  const config = getTelegramConfig();
-  
+  const config = await getTelegramConfig();
+
   if (!config.enabled || !config.botToken || !config.chatId) {
     console.log('Telegram notifications disabled or not configured');
     return { success: false, error: 'Telegram not configured' };
   }
 
   const message = formatOrderMessage(order);
-  
+
   try {
     // Use a CORS proxy or direct API call
     const response = await fetch(`https://api.telegram.org/bot${config.botToken}/sendMessage`, {
@@ -26,7 +26,7 @@ export const sendOrderNotification = async (order: Order): Promise<{ success: bo
     });
 
     const data = await response.json();
-    
+
     if (data.ok) {
       console.log('Telegram notification sent successfully');
       return { success: true, messageId: data.result.message_id };
@@ -41,7 +41,7 @@ export const sendOrderNotification = async (order: Order): Promise<{ success: bo
 };
 
 export const formatOrderMessage = (order: Order): string => {
-  const itemsList = order.items.map((item, index) => 
+  const itemsList = order.items.map((item, index) =>
     `${index + 1}. ${item.nameAr}\n   الكود: <code>${item.sku}</code>\n   السعر: ${formatPrice(item.price)} × ${item.quantity} = ${formatPrice(item.price * item.quantity)}`
   ).join('\n\n');
 
@@ -94,7 +94,7 @@ export const testTelegramConnection = async (botToken: string, chatId: string): 
     });
 
     const data = await response.json();
-    
+
     if (data.ok) {
       return { success: true };
     } else {
@@ -111,7 +111,7 @@ export const getBotInfo = async (botToken: string): Promise<{ success: boolean; 
   try {
     const response = await fetch(`https://api.telegram.org/bot${botToken}/getMe`);
     const data = await response.json();
-    
+
     if (data.ok) {
       return { success: true, username: data.result.username };
     } else {

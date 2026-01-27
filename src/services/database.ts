@@ -544,15 +544,38 @@ export const validateImageFile = (file: File): { valid: boolean; error?: string 
   return { valid: true };
 };
 
-// --- Telegram Config (Local) ---
-export const getTelegramConfig = (): TelegramConfig => {
-  const data = localStorage.getItem(DB_KEYS.TELEGRAM_CONFIG);
-  return data ? JSON.parse(data) : { botToken: '', chatId: '', enabled: false };
+// --- Telegram Config (Supabase) ---
+export const getTelegramConfig = async (): Promise<TelegramConfig> => {
+  try {
+    const { data, error } = await supabase
+      .from('settings')
+      .select('value')
+      .eq('id', 'telegram_config')
+      .single();
+
+    if (error || !data) return { botToken: '', chatId: '', enabled: false };
+    return data.value;
+  } catch (error) {
+    console.error('Error fetching telegram config:', error);
+    return { botToken: '', chatId: '', enabled: false };
+  }
 };
 
-export const updateTelegramConfig = (config: TelegramConfig): { success: boolean; error?: string } => {
-  localStorage.setItem(DB_KEYS.TELEGRAM_CONFIG, JSON.stringify(config));
-  return { success: true };
+export const updateTelegramConfig = async (config: TelegramConfig): Promise<{ success: boolean; error?: string }> => {
+  try {
+    const { error } = await supabase
+      .from('settings')
+      .upsert({
+        id: 'telegram_config',
+        value: config
+      });
+
+    if (error) throw error;
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error updating telegram config:', error);
+    return { success: false, error: error.message || 'فشل تحديث الإعدادات' };
+  }
 };
 
 // Helper for inputs

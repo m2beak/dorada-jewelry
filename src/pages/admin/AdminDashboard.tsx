@@ -83,11 +83,22 @@ const AdminDashboard: React.FC = () => {
   // Load data
   useEffect(() => {
     const loadData = async () => {
-      setProducts(await getProducts());
-      setOrders(await getOrders());
-      setCategories(await getCategories());
-      // Telegram config is still local
-      setTelegramConfig(getTelegramConfig());
+      try {
+        const [loadedProducts, loadedOrders, loadedCategories, loadedConfig] = await Promise.all([
+          getProducts(),
+          getOrders(),
+          getCategories(),
+          getTelegramConfig()
+        ]);
+
+        setProducts(loadedProducts);
+        setOrders(loadedOrders);
+        setCategories(loadedCategories);
+        setTelegramConfig(loadedConfig);
+      } catch (error) {
+        console.error('Error loading dashboard data:', error);
+        showToast('حدث خطأ أثناء تحميل البيانات', 'error');
+      }
     };
     loadData();
   }, []);
@@ -186,8 +197,8 @@ const AdminDashboard: React.FC = () => {
   };
 
   // Telegram Handlers
-  const handleSaveTelegramConfig = () => {
-    const result = updateTelegramConfig(telegramConfig);
+  const handleSaveTelegramConfig = async () => {
+    const result = await updateTelegramConfig(telegramConfig);
     if (result.success) {
       showToast('تم حفظ الإعدادات بنجاح!', 'success');
     } else {
