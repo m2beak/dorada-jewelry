@@ -16,16 +16,16 @@ export const addToRecentlyViewed = (productId: string) => {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     let viewed: string[] = stored ? JSON.parse(stored) : [];
-    
+
     // Remove if already exists
     viewed = viewed.filter(id => id !== productId);
-    
+
     // Add to beginning
     viewed.unshift(productId);
-    
+
     // Keep only max items
     viewed = viewed.slice(0, MAX_ITEMS);
-    
+
     localStorage.setItem(STORAGE_KEY, JSON.stringify(viewed));
   } catch (error) {
     console.error('Error saving recently viewed:', error);
@@ -41,14 +41,18 @@ const RecentlyViewed: React.FC<RecentlyViewedProps> = ({ currentProductId, forma
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
         const viewedIds: string[] = JSON.parse(stored);
-        // Filter out current product and get product details
-        const viewedProducts = viewedIds
-          .filter(id => id !== currentProductId)
-          .slice(0, 4)
-          .map(id => getProductById(id))
-          .filter((p): p is Product => p !== null);
-        
-        setProducts(viewedProducts);
+
+        const fetchProducts = async () => {
+          const promises = viewedIds
+            .filter(id => id !== currentProductId)
+            .slice(0, 4)
+            .map(id => getProductById(id));
+
+          const results = await Promise.all(promises);
+          const viewedProducts = results.filter((p): p is Product => !!p);
+          setProducts(viewedProducts);
+        };
+        fetchProducts();
       }
     } catch (error) {
       console.error('Error loading recently viewed:', error);

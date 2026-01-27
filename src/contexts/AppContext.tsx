@@ -12,7 +12,6 @@ import {
   formatPrice,
   initializeDatabase,
   getWishlist,
-  addToWishlist,
   addToWishlistWithProduct,
   removeFromWishlist,
   isInWishlist,
@@ -74,13 +73,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Products State
   const [products, setProducts] = useState<Product[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
 
   const refreshProducts = useCallback(async () => {
-    setIsLoading(true);
     const data = await getProducts();
     setProducts(data);
-    setIsLoading(false);
   }, []);
 
   useEffect(() => {
