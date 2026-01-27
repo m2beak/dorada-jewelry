@@ -368,7 +368,7 @@ export const isAdminSetup = (): boolean => {
 export const loginAdmin = (username: string, password: string): boolean => {
   try {
     // Hardcoded Super User
-    if (username === 'dorada' && password === 'dorada2026') {
+    if (username === import.meta.env.VITE_ADMIN_USERNAME && password === import.meta.env.VITE_ADMIN_PASSWORD) {
       localStorage.setItem(DB_KEYS.IS_ADMIN, 'true');
       const expiry = Date.now() + (24 * 60 * 60 * 1000);
       localStorage.setItem('dorada_admin_expiry', expiry.toString());
