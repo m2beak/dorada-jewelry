@@ -293,7 +293,7 @@ const Shop: React.FC = () => {
               <span className="font-serif text-2xl font-bold gold-text">دورادا</span>
             </div>
             <p className="text-dorada-cream/40 text-sm text-center">
-              © 2024 دورادا. جميع الحقوق محفوظة.
+              © 2026 دورادا. جميع الحقوق محفوظة.
             </p>
             <button
               onClick={() => navigate('/secure-access')}
