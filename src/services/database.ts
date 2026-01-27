@@ -1,4 +1,4 @@
-import { type Product, type Category, type User, type Cart, type Order, type Admin, type TelegramConfig, type Wishlist } from '@/types';
+import { type Product, type Category, type User, type Cart, type Order, type TelegramConfig, type Wishlist } from '@/types';
 import { supabase } from '@/lib/supabase';
 
 // Keys for LocalStorage
@@ -21,7 +21,7 @@ export const DB_KEYS = {
 
 // Initialize default data
 export const initializeDatabase = async () => {
-  initSession();
+
 
   // Initialize wishlist & cart locally
   if (!localStorage.getItem(DB_KEYS.WISHLIST)) {
@@ -252,43 +252,24 @@ export const createOrder = async (order: Omit<Order, 'id' | 'createdAt' | 'updat
   }
 
   try {
-    // Verify stock availability
-    for (const item of order.items) {
-      const { data: product, error } = await supabase
-        .from('products')
-        .select('quantity, nameAr')
-        .eq('id', item.productId)
-        .single();
+    // SECURITY UPDATE: Use RPC to handle prices and stock server-side
+    // This prevents price tampering and race conditions
+    const { data: newOrder, error } = await supabase.rpc('secure_create_order', {
+      p_customer_name: order.customerName,
+      p_customer_phone: order.customerPhone,
+      p_customer_address: order.customerAddress,
+      p_customer_city: order.customerCity,
+      p_items: order.items
+    });
 
-      if (error || !product) {
-        // Product might be deleted, but we still process? No, safer to fail.
-        console.warn(`Product ${item.productId} not found during order`);
-        // Continue strictly?
-      } else if (product.quantity < item.quantity) {
-        return { success: false, error: `الكمية المطلوبة غير متوفرة لـ ${product.nameAr}` };
-      }
+    if (error) {
+      console.error('RPC Error:', error);
+      return { success: false, error: error.message || 'فشل إنشاء الطلب' };
     }
 
-    const newOrder = {
-      ...order,
-      customerName: sanitizeInput(order.customerName),
-      customerAddress: sanitizeInput(order.customerAddress),
-      customerCity: sanitizeInput(order.customerCity),
-      status: 'pending',
-      statusAr: 'قيد الانتظار',
-      // Supabase handles dates
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
+    // RPC returns the order object directly (casted as any/jsonb)
+    return { success: true, order: newOrder as Order };
 
-    const { data, error } = await supabase
-      .from('orders')
-      .insert(newOrder)
-      .select()
-      .single();
-
-    if (error) throw error;
-    return { success: true, order: data };
   } catch (error: any) {
     console.error('Error creating order:', error);
     return { success: false, error: error.message || 'حدث خطأ أثناء إنشاء الطلب' };
@@ -355,83 +336,54 @@ export const updateOrderStatus = async (id: string, status: Order['status'], sta
   }
 };
 
-// --- Admin Operations (Auth Remains Local for now + Hardcoded Super User) ---
+// --- Admin Operations (Secure Supabase Auth) ---
 
 export const setupAdmin = (_username: string, _password: string): { success: boolean; error?: string } => {
-  return { success: false, error: 'تم تعطيل التسجيل. استخدم حساب المسؤول العام.' };
+  return { success: false, error: 'تم تعطيل التسجيل. استخدم لوحة تحكم Supabase لإضافة المستخدمين.' };
 };
 
 export const isAdminSetup = (): boolean => {
-  return true; // Always return true to bypass setup
+  return true;
 };
 
-export const loginAdmin = (username: string, password: string): boolean => {
+export const loginAdmin = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
   try {
-    // Hardcoded Super User
-    if (username === import.meta.env.VITE_ADMIN_USERNAME && password === import.meta.env.VITE_ADMIN_PASSWORD) {
-      localStorage.setItem(DB_KEYS.IS_ADMIN, 'true');
-      const expiry = Date.now() + (24 * 60 * 60 * 1000);
-      localStorage.setItem('dorada_admin_expiry', expiry.toString());
-      return true;
-    }
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
 
-    // Checking local DB for legacy admins
-    const data = localStorage.getItem(DB_KEYS.ADMIN);
-    if (!data) return false;
+    if (error) throw error;
 
-    const admin: Admin = JSON.parse(data);
-    if (admin.username === username && verifyPassword(password, admin.password)) {
-      localStorage.setItem(DB_KEYS.IS_ADMIN, 'true');
-      const expiry = Date.now() + (24 * 60 * 60 * 1000);
-      localStorage.setItem('dorada_admin_expiry', expiry.toString());
-      return true;
-    }
-    return false;
-  } catch (error) {
+    // We can still set the local flag for UI convenience, but the real check is the session
+    localStorage.setItem(DB_KEYS.IS_ADMIN, 'true');
+    return { success: true };
+  } catch (error: any) {
     console.error('Login error:', error);
-    return false;
+    return { success: false, error: error.message || 'فشل تسجيل الدخول' };
   }
 };
 
-export const logoutAdmin = (): void => {
+export const logoutAdmin = async (): Promise<void> => {
+  await supabase.auth.signOut();
   localStorage.removeItem(DB_KEYS.IS_ADMIN);
   localStorage.removeItem('dorada_admin_expiry');
 };
 
 export const isAdminLoggedIn = (): boolean => {
-  try {
-    const isAdmin = localStorage.getItem(DB_KEYS.IS_ADMIN) === 'true';
-    const expiry = localStorage.getItem('dorada_admin_expiry');
-
-    if (isAdmin && expiry && Date.now() < parseInt(expiry)) {
-      return true;
-    }
-
-    logoutAdmin(); // Session expired
-    return false;
-  } catch {
-    return false;
-  }
+  // Sync check relies on localStorage for immediate UI rendering, 
+  // but verified components should use useApp or check session async.
+  // We will keep this for routing guards but it's "optimistic".
+  return localStorage.getItem(DB_KEYS.IS_ADMIN) === 'true';
 };
 
-function initSession() {
-  // Check token expiry
-  isAdminLoggedIn();
-}
+// Async session check helper
+export const checkAdminSession = async (): Promise<boolean> => {
+  const { data } = await supabase.auth.getSession();
+  return !!data.session;
+};
 
-function hashPassword(password: string): string {
-  let hash = 0;
-  for (let i = 0; i < password.length; i++) {
-    const char = password.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash;
-  }
-  return 'hashed_' + Math.abs(hash).toString(16);
-}
 
-function verifyPassword(password: string, hashedPassword: string): boolean {
-  return hashPassword(password) === hashedPassword;
-}
 
 // --- Cart Operations (Local Storage) ---
 
@@ -578,10 +530,7 @@ export const updateTelegramConfig = async (config: TelegramConfig): Promise<{ su
   }
 };
 
-// Helper for inputs
-function sanitizeInput(input: string): string {
-  return input.trim().substring(0, 500);
-}
+
 
 function validateOrder(order: any): string | null {
   if (!order.customerName) return 'اسم العميل مطلوب';

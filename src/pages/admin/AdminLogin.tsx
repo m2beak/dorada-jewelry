@@ -28,14 +28,14 @@ const AdminLogin: React.FC = () => {
     setError('');
     setIsLoading(true);
 
-    const success = loginAdmin(username, password);
-    
-    if (success) {
+    const result = await loginAdmin(username, password);
+
+    if (result.success) {
       navigate('/admin/dashboard');
     } else {
-      setError('اسم المستخدم أو كلمة المرور غير صحيحة');
+      setError(result.error || 'البريد الإلكتروني أو كلمة المرور غير صحيحة');
     }
-    
+
     setIsLoading(false);
   };
 
@@ -43,7 +43,7 @@ const AdminLogin: React.FC = () => {
     <div className="min-h-screen flex items-center justify-center relative overflow-hidden" dir="rtl">
       {/* Background */}
       <div className="absolute inset-0 bg-gradient-to-br from-dorada-blue via-[#1a2a3d] to-[#0d1a26]" />
-      
+
       {/* Decorative Elements */}
       <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-dorada-gold/5 rounded-full blur-3xl" />
       <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-dorada-gold/5 rounded-full blur-3xl" />
@@ -66,19 +66,19 @@ const AdminLogin: React.FC = () => {
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Username */}
+            {/* Email */}
             <div>
               <label className="block font-sans text-sm text-dorada-cream/80 mb-2">
-                اسم المستخدم
+                البريد الإلكتروني
               </label>
               <div className="relative">
                 <User className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-dorada-cream/40" />
                 <input
-                  type="text"
+                  type="email"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   className="w-full pr-12 pl-4 py-3 rounded-xl bg-white/5 border border-white/10 text-dorada-cream placeholder-dorada-cream/30 focus:border-dorada-gold focus:outline-none transition-colors font-sans"
-                  placeholder="أدخل اسم المستخدم"
+                  placeholder="admin@dorada.jewelry"
                   required
                 />
               </div>
