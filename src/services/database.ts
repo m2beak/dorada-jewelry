@@ -286,40 +286,7 @@ export const updateOrderStatus = async (id: string, status: Order['status'], sta
 
     if (fetchError || !order) return { success: false, error: 'الطلب غير موجود' };
 
-    const oldStatus = order.status;
-    const isStockReducedStatus = (s: string) => ['processing', 'shipped', 'delivered'].includes(s);
-    const wasReduced = isStockReducedStatus(oldStatus);
-    const willReduce = isStockReducedStatus(status);
-
-    // Case 1: Deduct Stock
-    if (!wasReduced && willReduce) {
-      for (const item of order.items) {
-        // Atomic Decrement Logic via independent reads/updates for now
-        const { data: p } = await supabase.from('products').select('quantity').eq('id', item.productId).single();
-        if (p) {
-          if (p.quantity < item.quantity) {
-            return { success: false, error: `الكمية غير متوفرة للممنتج` };
-          }
-          await supabase.from('products').update({
-            quantity: p.quantity - item.quantity,
-            inStock: (p.quantity - item.quantity) > 0
-          }).eq('id', item.productId);
-        }
-      }
-    }
-    // Case 2: Return Stock
-    else if (wasReduced && !willReduce) {
-      for (const item of order.items) {
-        const { data: p } = await supabase.from('products').select('quantity').eq('id', item.productId).single();
-        if (p) {
-          await supabase.from('products').update({
-            quantity: p.quantity + item.quantity,
-            inStock: true
-          }).eq('id', item.productId);
-        }
-      }
-    }
-
+    // Stock is now handled by Database Trigger (handle_order_status_change)
     const { data: updated, error: updateError } = await supabase
       .from('orders')
       .update({ status, statusAr, updatedAt: new Date().toISOString() })
