@@ -16,6 +16,7 @@ import {
 import { useApp } from '@/contexts/AppContext';
 import QuickViewModal from '@/components/QuickViewModal';
 import RecentlyViewed from '@/components/RecentlyViewed';
+import { ProductSkeleton } from '@/components/ProductSkeleton';
 import type { Product } from '@/types';
 import { getOptimizedUrl } from '@/utils/image';
 import { useProducts, useCategories } from '@/hooks/useProducts';
@@ -30,7 +31,7 @@ const Shop: React.FC = () => {
 
   // React Query Hooks
   const { data: categories = [] } = useCategories();
-  const { data: products = [] } = useProducts(selectedCategory);
+  const { data: products = [], isLoading } = useProducts(selectedCategory);
 
   // Quick View Modal State
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
@@ -190,7 +191,13 @@ const Shop: React.FC = () => {
           </div>
 
           {/* Products Grid */}
-          {filteredProducts.length === 0 ? (
+          {isLoading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {[...Array(8)].map((_, i) => (
+                <ProductSkeleton key={i} />
+              ))}
+            </div>
+          ) : filteredProducts.length === 0 ? (
             <div className="text-center py-20">
               <ShoppingBag className="w-16 h-16 text-dorada-cream/20 mx-auto mb-4" />
               <p className="text-dorada-cream/50">لا توجد منتجات في هذا التصنيف</p>

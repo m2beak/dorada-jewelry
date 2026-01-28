@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { getCategories, getProductsByCategory, getFeaturedProducts } from '@/services/database';
+import { getCategories, getProductsByCategory, getFeaturedProducts, getProducts } from '@/services/database';
 
 
 // Cache keys
@@ -30,6 +30,14 @@ export const useProducts = (category?: string | null) => {
             }
             return getFeaturedProducts();
         },
+        staleTime: STALE_TIME,
+    });
+};
+
+export const useAllProducts = () => {
+    return useQuery({
+        queryKey: productKeys.list('all'),
+        queryFn: getProducts, // Imported from services/database
         staleTime: STALE_TIME,
     });
 };

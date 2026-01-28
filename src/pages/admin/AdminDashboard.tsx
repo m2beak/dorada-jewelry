@@ -53,25 +53,31 @@ import { testTelegramConnection, getBotInfo } from '@/services/telegram';
 import { useApp } from '@/contexts/AppContext';
 import type { Product, Order, Category, ProductFeature } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
+import { useQueryClient } from '@tanstack/react-query';
+import { useAllProducts } from '@/hooks/useProducts';
+import { useOrders } from '@/hooks/useOrders';
+import { useCategories, productKeys } from '@/hooks/useProducts';
+import { orderKeys } from '@/hooks/useOrders';
 
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { setAdmin, refreshProducts, showToast } = useApp();
   const [activeTab, setActiveTab] = useState<'products' | 'orders' | 'categories' | 'settings'>('products');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const queryClient = useQueryClient();
 
-  // Products State
-  const [products, setProducts] = useState<Product[]>([]);
+  // Products State (React Query)
+  const { data: products = [] } = useAllProducts();
   const [productSearch, setProductSearch] = useState('');
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
-  // Orders State
-  const [orders, setOrders] = useState<Order[]>([]);
+  // Orders State (React Query)
+  const { data: orders = [] } = useOrders();
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
-  // Categories State
-  const [categories, setCategories] = useState<Category[]>([]);
+  // Categories State (React Query)
+  const { data: categories = [] } = useCategories();
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
 
@@ -80,31 +86,13 @@ const AdminDashboard: React.FC = () => {
   const [isTestingTelegram, setIsTestingTelegram] = useState(false);
   const [botUsername, setBotUsername] = useState('');
 
-  // Load data
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        const [loadedProducts, loadedOrders, loadedCategories, loadedConfig] = await Promise.all([
-          getProducts(),
-          getOrders(),
-          getCategories(),
-          getTelegramConfig()
-        ]);
-
-        setProducts(loadedProducts);
-        setOrders(loadedOrders);
-        setCategories(loadedCategories);
-        setTelegramConfig(loadedConfig);
-      } catch (error) {
-        console.error('Error loading dashboard data:', error);
-        showToast('حدث خطأ أثناء تحميل البيانات', 'error');
-      }
-    };
-    loadData();
+  // Initial Load (Telegram Config Only)
+  React.useEffect(() => {
+    getTelegramConfig().then(setTelegramConfig);
   }, []);
 
   // Get bot info when token changes
-  useEffect(() => {
+  React.useEffect(() => {
     if (telegramConfig.botToken) {
       getBotInfo(telegramConfig.botToken).then(result => {
         if (result.success && result.username) {
@@ -131,8 +119,9 @@ const AdminDashboard: React.FC = () => {
     }
 
     if (result.success) {
-      setProducts(await getProducts());
-      refreshProducts();
+      // Invalidate queries to refresh data automatically
+      queryClient.invalidateQueries({ queryKey: productKeys.all });
+      refreshProducts(); // Keep AppContext in sync
       setIsProductModalOpen(false);
       setEditingProduct(null);
       showToast(editingProduct ? 'تم تحديث المنتج' : 'تم إضافة المنتج', 'success');
@@ -145,7 +134,7 @@ const AdminDashboard: React.FC = () => {
     if (confirm('هل أنت متأكد من حذف هذا المنتج؟')) {
       const result = await deleteProduct(id);
       if (result.success) {
-        setProducts(await getProducts());
+        queryClient.invalidateQueries({ queryKey: productKeys.all });
         refreshProducts();
         showToast('تم حذف المنتج', 'success');
       } else {
@@ -164,7 +153,7 @@ const AdminDashboard: React.FC = () => {
     }
 
     if (result.success) {
-      setCategories(await getCategories());
+      queryClient.invalidateQueries({ queryKey: productKeys.categories });
       setIsCategoryModalOpen(false);
       setEditingCategory(null);
       showToast(editingCategory ? 'تم تحديث التصنيف' : 'تم إضافة التصنيف', 'success');
@@ -177,7 +166,7 @@ const AdminDashboard: React.FC = () => {
     if (confirm('هل أنت متأكد من حذف هذا التصنيف؟')) {
       const result = await deleteCategory(id);
       if (result.success) {
-        setCategories(await getCategories());
+        queryClient.invalidateQueries({ queryKey: productKeys.categories });
         showToast('تم حذف التصنيف', 'success');
       } else {
         showToast(result.error || 'حدث خطأ أثناء الحذف', 'error');
@@ -187,11 +176,35 @@ const AdminDashboard: React.FC = () => {
 
   // Order Handlers
   const handleUpdateOrderStatus = async (orderId: string, status: Order['status'], statusAr: string) => {
+    // 1. Snapshot previous state
+    const previousOrders = queryClient.getQueryData<Order[]>(orderKeys.all);
+
+    // 2. Optimistic Update
+    if (previousOrders) {
+      queryClient.setQueryData<Order[]>(orderKeys.all, (old) =>
+        old ? old.map(o => o.id === orderId ? { ...o, status, statusAr } : o) : []
+      );
+    }
+
+    // 3. API Call
     const result = await updateOrderStatus(orderId, status, statusAr);
+
+    // 4. Invalidate (Trigger Refresh)
+    // We invalidate regardless of success/error to ensure eventually consistency,
+    // but on error the invalidation will restore the correct state.
+    queryClient.invalidateQueries({ queryKey: orderKeys.all });
+
+    // Also invalidate Products because stock might have changed!
+    queryClient.invalidateQueries({ queryKey: productKeys.all });
+
     if (result.success) {
-      setOrders(await getOrders());
       showToast('تم تحديث حالة الطلب', 'success');
     } else {
+      // Revert is handled by invalidation or could be explicit setQueryData
+      // If we want instant revert without waiting for refetch:
+      if (previousOrders) {
+        queryClient.setQueryData(orderKeys.all, previousOrders);
+      }
       showToast(result.error || 'حدث خطأ أثناء تحديث الحالة', 'error');
     }
   };
