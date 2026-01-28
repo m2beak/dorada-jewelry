@@ -286,7 +286,51 @@ export const updateOrderStatus = async (id: string, status: Order['status'], sta
 
     if (fetchError || !order) return { success: false, error: 'الطلب غير موجود' };
 
-    // Stock is now handled by Database Trigger (handle_order_status_change)
+    // Stock Management Logic
+    // Case 1: Order is being marked as DELIVERED (and wasn't before) -> Reduce Stock
+    if (status === 'delivered' && order.status !== 'delivered') {
+      for (const item of order.items) {
+        // Fetch current product to get latest quantity
+        const { data: product } = await supabase
+          .from('products')
+          .select('quantity')
+          .eq('id', item.productId)
+          .single();
+
+        if (product) {
+          const newQuantity = Math.max(0, product.quantity - item.quantity);
+          await supabase
+            .from('products')
+            .update({
+              quantity: newQuantity,
+              inStock: newQuantity > 0
+            })
+            .eq('id', item.productId);
+        }
+      }
+    }
+    // Case 2: Order was DELIVERED but is now being changed to something else (e.g. Cancelled/Returned) -> Restore Stock
+    else if (order.status === 'delivered' && status !== 'delivered') {
+      for (const item of order.items) {
+        const { data: product } = await supabase
+          .from('products')
+          .select('quantity')
+          .eq('id', item.productId)
+          .single();
+
+        if (product) {
+          const newQuantity = product.quantity + item.quantity;
+          await supabase
+            .from('products')
+            .update({
+              quantity: newQuantity,
+              inStock: true
+            })
+            .eq('id', item.productId);
+        }
+      }
+    }
+
     const { data: updated, error: updateError } = await supabase
       .from('orders')
       .update({ status, statusAr, updatedAt: new Date().toISOString() })
