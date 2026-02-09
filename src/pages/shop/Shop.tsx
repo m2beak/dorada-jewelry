@@ -156,7 +156,7 @@ const Shop: React.FC = () => {
               مجوهرات <span className="gold-text">فاخرة</span>
             </h1>
             <p className="text-dorada-cream/60 max-w-xl mx-auto">
-              اكتشف تشكيلتنا الرائعة من المجوهرات المصنوعة يدوياً بأعلى معايير الجودة
+              اكتشف تشكيلتنا الرائعة من المجوهرات النازكة و بالجودة الممتازة
             </p>
           </div>
         </div>
