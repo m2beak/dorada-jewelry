@@ -18,7 +18,7 @@ import QuickViewModal from '@/components/QuickViewModal';
 import RecentlyViewed from '@/components/RecentlyViewed';
 import { ProductSkeleton } from '@/components/ProductSkeleton';
 import type { Product } from '@/types';
-import { getOptimizedUrl } from '@/utils/image';
+import { getOptimizedImageUrl } from '@/utils/image';
 import { useProducts, useCategories } from '@/hooks/useProducts';
 
 const Shop: React.FC = () => {
@@ -320,14 +320,23 @@ const ProductCard: React.FC<{
   const isOutOfStock = product.quantity === 0;
 
   return (
-    <div className="glass-card overflow-hidden group cursor-pointer" onClick={onClick}>
-      <div className="relative aspect-square overflow-hidden">
+    <div className="glass-card overflow-hidden group cursor-pointer bg-white/5" onClick={onClick}>
+      <div className="relative aspect-square overflow-hidden bg-white/5">
+        {!product.images[0] && (
+          <div className="absolute inset-0 bg-white/10 animate-pulse" />
+        )}
         <img
-          src={getOptimizedUrl(product.images[0], 500)}
+          src={getOptimizedImageUrl(product.images[0], 300)}
           alt={product.nameAr}
           loading="lazy"
-          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+          onLoad={(e) => {
+            const target = e.target as HTMLImageElement;
+            target.classList.remove('opacity-0');
+          }}
+          className="w-full h-full object-cover transition-all duration-700 group-hover:scale-110 opacity-0 bg-white/5"
         />
+        {/* Placeholder skeleton - visible while image is loading or if image fails */}
+        <div className="absolute inset-0 bg-white/10 animate-pulse -z-10" />
 
         {/* Out of Stock Overlay */}
         {isOutOfStock && (

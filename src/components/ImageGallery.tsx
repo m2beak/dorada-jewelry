@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { getOptimizedUrl } from '@/utils/image';
+import { getOptimizedImageUrl } from '@/utils/image';
 
 interface ImageGalleryProps {
   images: string[];
@@ -38,7 +38,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({ images, alt, className = ''
       {/* Main Image */}
       <div className="relative w-full h-full overflow-hidden rounded-xl">
         <img
-          src={getOptimizedUrl(images[currentIndex], 800)}
+          src={getOptimizedImageUrl(images[currentIndex], 800)}
           alt={`${alt} - ${currentIndex + 1}`}
           loading="lazy"
           className="w-full h-full object-cover transition-transform duration-500"
@@ -83,7 +83,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({ images, alt, className = ''
                 }`}
             >
               <img
-                src={getOptimizedUrl(image, 150)}
+                src={getOptimizedImageUrl(image, 150)}
                 alt={`${alt} thumbnail ${index + 1}`}
                 className="w-full h-full object-cover"
               />

@@ -23,7 +23,7 @@ import { useApp } from '@/contexts/AppContext';
 import ImageGallery from '@/components/ImageGallery';
 import RecentlyViewed, { addToRecentlyViewed } from '@/components/RecentlyViewed';
 import type { Product } from '@/types';
-import { getOptimizedUrl } from '@/utils/image';
+import { getOptimizedImageUrl } from '@/utils/image';
 
 const ProductDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -306,7 +306,7 @@ const ProductDetail: React.FC = () => {
                   >
                     <div className="aspect-square overflow-hidden">
                       <img
-                        src={getOptimizedUrl(prod.images[0], 400)}
+                        src={getOptimizedImageUrl(prod.images[0], 400)}
                         alt={prod.nameAr}
                         loading="lazy"
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
