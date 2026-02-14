@@ -373,26 +373,14 @@ const ProductCard: React.FC<{
           <Heart className={`w-3 md:w-4 h-3 md:h-4 ${isInWishlist ? 'fill-current' : ''}`} />
         </button>
 
-        {/* Quick Add to Cart */}
-        {!isOutOfStock && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onAddToCart(product);
-            }}
-            className="absolute bottom-2 md:bottom-4 left-2 md:left-4 right-2 md:right-4 gold-btn py-1.5 md:py-2.5 text-xs md:text-sm opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300"
-          >
-            <ShoppingBag className="w-3.5 h-3.5 md:hidden" />
-            <span className="hidden md:inline">أضف إلى السلة</span>
-          </button>
-        )}
+
       </div>
       <div className="p-2 md:p-4">
         <p className="text-[10px] md:text-xs text-dorada-gold mb-0.5 md:mb-1">{product.categoryAr}</p>
         <h3 className="font-serif text-sm md:text-lg font-semibold text-dorada-cream mb-1 md:mb-2 group-hover:text-dorada-gold transition-colors line-clamp-1">
           {product.nameAr}
         </h3>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 mb-2">
           <span className="text-sm md:text-base font-bold gold-text">{formatPrice(product.price)}</span>
           {product.originalPrice && product.originalPrice > product.price && (
             <span className="text-xs md:text-sm text-dorada-cream/40 line-through">
@@ -400,6 +388,20 @@ const ProductCard: React.FC<{
             </span>
           )}
         </div>
+
+        {/* Add to Cart Button - Always visible on mobile, hover on desktop */}
+        {!isOutOfStock && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onAddToCart(product);
+            }}
+            className="w-full gold-btn py-1.5 md:py-2 text-xs md:text-sm flex items-center justify-center gap-1.5 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
+          >
+            <ShoppingBag className="w-3.5 h-3.5" />
+            <span>أضف إلى السلة</span>
+          </button>
+        )}
       </div>
     </div>
   );
