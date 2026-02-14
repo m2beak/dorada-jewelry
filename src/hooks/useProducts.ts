@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { getCategories, getProductsByCategory, getFeaturedProducts, getProducts } from '@/services/database';
+import { getCategories, getProductsByCategory, getProducts } from '@/services/database';
 
 
 // Cache keys
@@ -23,12 +23,14 @@ export const useCategories = () => {
 
 export const useProducts = (category?: string | null) => {
     return useQuery({
-        queryKey: productKeys.list(category || 'featured'),
+        queryKey: productKeys.list(category || 'all'),
         queryFn: async () => {
+            // If category is provided and not empty, filter by category
             if (category) {
                 return getProductsByCategory(category);
             }
-            return getFeaturedProducts();
+            // Otherwise, return ALL products (not just featured)
+            return getProducts();
         },
         staleTime: STALE_TIME,
     });
