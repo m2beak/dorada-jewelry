@@ -165,11 +165,11 @@ const Shop: React.FC = () => {
       {/* Categories & Products */}
       <section className="pb-20 px-4 lg:px-8">
         <div className="max-w-7xl mx-auto">
-          {/* Categories */}
-          <div className="flex flex-wrap gap-3 justify-center mb-12">
+          {/* Categories - Horizontal Scroll on Mobile */}
+          <div className="flex gap-3 mb-8 overflow-x-auto pb-2 scrollbar-hide justify-start md:justify-center">
             <button
               onClick={() => setSelectedCategory(null)}
-              className={`px-6 py-2.5 rounded-full text-sm font-medium transition-all ${selectedCategory === null
+              className={`px-4 md:px-6 py-2 md:py-2.5 rounded-full text-xs md:text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 ${selectedCategory === null
                 ? 'bg-dorada-gold text-dorada-blue'
                 : 'glass-card text-dorada-cream hover:border-dorada-gold/50'
                 }`}
@@ -180,7 +180,7 @@ const Shop: React.FC = () => {
               <button
                 key={cat.id}
                 onClick={() => setSelectedCategory(cat.name)}
-                className={`px-6 py-2.5 rounded-full text-sm font-medium transition-all ${selectedCategory === cat.name
+                className={`px-4 md:px-6 py-2 md:py-2.5 rounded-full text-xs md:text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 ${selectedCategory === cat.name
                   ? 'bg-dorada-gold text-dorada-blue'
                   : 'glass-card text-dorada-cream hover:border-dorada-gold/50'
                   }`}
@@ -192,7 +192,7 @@ const Shop: React.FC = () => {
 
           {/* Products Grid */}
           {isLoading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-4 lg:gap-6">
               {[...Array(8)].map((_, i) => (
                 <ProductSkeleton key={i} />
               ))}
@@ -203,7 +203,7 @@ const Shop: React.FC = () => {
               <p className="text-dorada-cream/50">لا توجد منتجات في هذا التصنيف</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-4 lg:gap-6">
               {filteredProducts.map((product) => (
                 <ProductCard
                   key={product.id}
@@ -321,7 +321,7 @@ const ProductCard: React.FC<{
 
   return (
     <div className="glass-card overflow-hidden group cursor-pointer bg-white/5" onClick={onClick}>
-      <div className="relative aspect-square overflow-hidden bg-white/5">
+      <div className="relative aspect-[3/4] overflow-hidden bg-white/5">
         {!product.images[0] && (
           <div className="absolute inset-0 bg-white/10 animate-pulse" />
         )}
@@ -347,7 +347,7 @@ const ProductCard: React.FC<{
 
         {/* Discount Badge */}
         {product.originalPrice && product.originalPrice > product.price && !isOutOfStock && (
-          <div className="absolute top-3 right-3 px-3 py-1 rounded-full bg-red-500/80 text-white text-xs font-medium">
+          <div className="absolute top-2 md:top-3 right-2 md:right-3 px-2 md:px-3 py-0.5 md:py-1 rounded-full bg-red-500/80 text-white text-[10px] md:text-xs font-medium">
             خصم
           </div>
         )}
@@ -356,21 +356,21 @@ const ProductCard: React.FC<{
         {onQuickView && (
           <button
             onClick={(e) => onQuickView(e, product)}
-            className="absolute top-3 right-3 p-2 rounded-full bg-black/50 text-white hover:bg-dorada-gold/80 transition-all opacity-0 group-hover:opacity-100"
+            className="absolute top-2 md:top-3 right-2 md:right-3 p-1.5 md:p-2 rounded-full bg-black/50 text-white hover:bg-dorada-gold/80 transition-all opacity-0 group-hover:opacity-100"
           >
-            <Eye className="w-4 h-4" />
+            <Eye className="w-3 md:w-4 h-3 md:h-4" />
           </button>
         )}
 
         {/* Wishlist Button */}
         <button
           onClick={(e) => onAddToWishlist(e, product.id)}
-          className={`absolute top-3 left-3 p-2 rounded-full transition-all ${isInWishlist
+          className={`absolute top-2 md:top-3 left-2 md:left-3 p-1.5 md:p-2 rounded-full transition-all ${isInWishlist
             ? 'bg-red-500 text-white'
             : 'bg-black/50 text-white hover:bg-red-500/80'
             }`}
         >
-          <Heart className={`w-4 h-4 ${isInWishlist ? 'fill-current' : ''}`} />
+          <Heart className={`w-3 md:w-4 h-3 md:h-4 ${isInWishlist ? 'fill-current' : ''}`} />
         </button>
 
         {/* Quick Add to Cart */}
@@ -380,21 +380,22 @@ const ProductCard: React.FC<{
               e.stopPropagation();
               onAddToCart(product);
             }}
-            className="absolute bottom-4 left-4 right-4 gold-btn py-2.5 text-sm opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300"
+            className="absolute bottom-2 md:bottom-4 left-2 md:left-4 right-2 md:right-4 gold-btn py-1.5 md:py-2.5 text-xs md:text-sm opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300"
           >
-            أضف إلى السلة
+            <ShoppingBag className="w-3.5 h-3.5 md:hidden" />
+            <span className="hidden md:inline">أضف إلى السلة</span>
           </button>
         )}
       </div>
-      <div className="p-4">
-        <p className="text-xs text-dorada-gold mb-1">{product.categoryAr}</p>
-        <h3 className="font-serif text-lg font-semibold text-dorada-cream mb-2 group-hover:text-dorada-gold transition-colors">
+      <div className="p-2 md:p-4">
+        <p className="text-[10px] md:text-xs text-dorada-gold mb-0.5 md:mb-1">{product.categoryAr}</p>
+        <h3 className="font-serif text-sm md:text-lg font-semibold text-dorada-cream mb-1 md:mb-2 group-hover:text-dorada-gold transition-colors line-clamp-1">
           {product.nameAr}
         </h3>
         <div className="flex items-center gap-2">
-          <span className="font-bold gold-text">{formatPrice(product.price)}</span>
+          <span className="text-sm md:text-base font-bold gold-text">{formatPrice(product.price)}</span>
           {product.originalPrice && product.originalPrice > product.price && (
-            <span className="text-sm text-dorada-cream/40 line-through">
+            <span className="text-xs md:text-sm text-dorada-cream/40 line-through">
               {formatPrice(product.originalPrice)}
             </span>
           )}
