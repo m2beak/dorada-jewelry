@@ -42,7 +42,6 @@ import {
   getTelegramConfig,
   updateTelegramConfig,
   formatPrice,
-  fileToBase64,
   validateImageFile,
 } from '@/services/database';
 import { revokeAdminAccess } from '@/services/security';
@@ -1093,14 +1092,18 @@ const MultiImageUpload: React.FC<{
     for (const file of Array.from(files)) {
       const validation = validateImageFile(file);
       if (!validation.valid) {
+        alert(validation.error);
         continue;
       }
 
       try {
-        const base64 = await fileToBase64(file);
-        newImages.push(base64);
-      } catch (err) {
-        console.error('Error converting file:', err);
+        // Upload to Supabase Storage instead of converting to base64
+        const { uploadImageToStorage } = await import('@/services/uploadImage');
+        const publicUrl = await uploadImageToStorage(file);
+        newImages.push(publicUrl);
+      } catch (err: any) {
+        console.error('Error uploading file:', err);
+        alert(err.message || 'فشل رفع الصورة');
       }
     }
 
@@ -1116,7 +1119,20 @@ const MultiImageUpload: React.FC<{
     }
   };
 
-  const handleRemoveImage = (index: number) => {
+  const handleRemoveImage = async (index: number) => {
+    const imageUrl = images[index];
+
+    // Try to delete from storage if it's a Supabase URL
+    if (imageUrl.includes('supabase')) {
+      try {
+        const { deleteImageFromStorage } = await import('@/services/uploadImage');
+        await deleteImageFromStorage(imageUrl);
+      } catch (err) {
+        console.error('Error deleting image from storage:', err);
+        // Continue anyway to remove from array
+      }
+    }
+
     const newImages = images.filter((_, i) => i !== index);
     onImagesChange(newImages);
   };
