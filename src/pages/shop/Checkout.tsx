@@ -230,7 +230,7 @@ const Checkout: React.FC = () => {
                 {/* Name */}
                 <div>
                   <label className="block text-sm text-dorada-cream/80 mb-2">
-                    الاسم الكامل <span className="text-red-400">*</span>
+                    اسم المستلم <span className="text-red-400">*</span>
                   </label>
                   <div className="relative">
                     <User className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-dorada-cream/40" />
