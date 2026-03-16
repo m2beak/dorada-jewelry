@@ -73,7 +73,7 @@ const Shop: React.FC = () => {
           <div className="flex items-center justify-between">
             {/* Logo */}
             <button onClick={() => navigate('/')} className="flex items-center gap-2 group">
-              <img src="/doradaicon.svg" alt="دورادا" className="w-7 h-7 text-dorada-gold transition-transform group-hover:scale-110 object-contain" />
+              <img src="/doradaicon.svg" alt="دورادا" className="w-9 h-9 text-dorada-gold transition-transform group-hover:scale-110 object-contain" />
               <span className="font-serif text-xl font-bold gold-text">دورادا</span>
             </button>
 
@@ -276,7 +276,7 @@ const Shop: React.FC = () => {
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row items-center justify-center gap-6">
             <div className="flex items-center gap-3">
-              <img src="/doradaicon.svg" alt="دورادا" className="w-8 h-8 text-dorada-gold object-contain" />
+              <img src="/doradaicon.svg" alt="دورادا" className="w-10 h-10 text-dorada-gold object-contain" />
               <span className="font-serif text-2xl font-bold gold-text">دورادا</span>
             </div>
             <p className="text-dorada-cream/40 text-sm text-center">

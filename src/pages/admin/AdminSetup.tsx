@@ -87,7 +87,7 @@ const AdminSetup: React.FC = () => {
           {/* Logo */}
           <div className="text-center mb-8">
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-dorada-gold/10 mb-4">
-              <img src="/doradaicon.svg" alt="دورادا" className="w-8 h-8 text-dorada-gold object-contain" />
+              <img src="/doradaicon.svg" alt="دورادا" className="w-10 h-10 text-dorada-gold object-contain" />
             </div>
             <h1 className="font-serif text-2xl font-bold gold-text mb-2">
               إعداد المسؤول

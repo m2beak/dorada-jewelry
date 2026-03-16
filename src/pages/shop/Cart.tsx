@@ -32,7 +32,7 @@ const Cart: React.FC = () => {
               </button>
 
               <button onClick={() => navigate('/')} className="flex items-center gap-2">
-                <img src="/doradaicon.svg" alt="دورادا" className="w-6 h-6 text-dorada-gold object-contain" />
+                <img src="/doradaicon.svg" alt="دورادا" className="w-8 h-8 text-dorada-gold object-contain" />
                 <span className="font-serif text-lg font-bold gold-text">دورادا</span>
               </button>
 
@@ -93,7 +93,7 @@ const Cart: React.FC = () => {
             </button>
 
             <button onClick={() => navigate('/')} className="flex items-center gap-2">
-              <img src="/doradaicon.svg" alt="دورادا" className="w-6 h-6 text-dorada-gold object-contain" />
+              <img src="/doradaicon.svg" alt="دورادا" className="w-8 h-8 text-dorada-gold object-contain" />
               <span className="font-serif text-lg font-bold gold-text">دورادا</span>
             </button>
 
