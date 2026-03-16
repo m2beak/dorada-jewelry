@@ -36,13 +36,11 @@ const Checkout: React.FC = () => {
     return (
       <div className="min-h-screen bg-gradient-to-br from-dorada-blue via-[#1a2a3d] to-[#0d1a26]" dir="rtl">
         <nav className="fixed top-0 left-0 right-0 z-50 nav-glass py-4">
-          <div className="w-full px-4 lg:px-8">
-            <div className="flex items-center justify-center">
-              <button onClick={() => navigate('/')} className="flex items-center gap-2">
-                <img src="/doradaicon.svg" alt="دورادا" className="w-8 h-8 text-dorada-gold object-contain" />
-                <span className="font-serif text-lg font-bold gold-text">دورادا</span>
-              </button>
-            </div>
+          <div className="w-full px-4 lg:px-8 relative h-12 flex items-center justify-between">
+            <button onClick={() => navigate('/')} className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-2">
+              <img src="/doradaicon.svg" alt="دورادا" className="w-8 h-8 text-dorada-gold object-contain" />
+              <span className="font-serif text-lg font-bold gold-text">دورادا</span>
+            </button>
           </div>
         </nav>
         <main className="pt-24 pb-20 px-4 lg:px-8 min-h-screen flex items-center justify-center">
@@ -147,13 +145,11 @@ const Checkout: React.FC = () => {
     return (
       <div className="min-h-screen bg-gradient-to-br from-dorada-blue via-[#1a2a3d] to-[#0d1a26]" dir="rtl">
         <nav className="fixed top-0 left-0 right-0 z-50 nav-glass py-4">
-          <div className="w-full px-4 lg:px-8">
-            <div className="flex items-center justify-center">
-              <button onClick={() => navigate('/')} className="flex items-center gap-2">
-                <img src="/doradaicon.svg" alt="دورادا" className="w-8 h-8 text-dorada-gold object-contain" />
-                <span className="font-serif text-lg font-bold gold-text">دورادا</span>
-              </button>
-            </div>
+          <div className="w-full px-4 lg:px-8 relative h-12 flex items-center justify-between">
+            <button onClick={() => navigate('/')} className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-2">
+              <img src="/doradaicon.svg" alt="دورادا" className="w-8 h-8 text-dorada-gold object-contain" />
+              <span className="font-serif text-lg font-bold gold-text">دورادا</span>
+            </button>
           </div>
         </nav>
 
@@ -195,22 +191,25 @@ const Checkout: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-br from-dorada-blue via-[#1a2a3d] to-[#0d1a26]" dir="rtl">
       {/* Navbar */}
       <nav className="fixed top-0 left-0 right-0 z-50 nav-glass py-4">
-        <div className="w-full px-4 lg:px-8">
-          <div className="flex items-center justify-between">
+        <div className="w-full px-4 lg:px-8 relative">
+          <div className="flex items-center justify-between h-12">
             <button
               onClick={() => navigate('/cart')}
-              className="flex items-center gap-2 text-dorada-cream/60 hover:text-dorada-gold transition-colors"
+              className="flex items-center gap-2 text-dorada-cream/60 hover:text-dorada-gold transition-colors z-10"
             >
               <ChevronLeft className="w-5 h-5" />
               <span className="text-sm">العودة للسلة</span>
             </button>
 
-            <button onClick={() => navigate('/')} className="flex items-center gap-2">
+            <button 
+              onClick={() => navigate('/')} 
+              className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-2"
+            >
               <img src="/doradaicon.svg" alt="دورادا" className="w-8 h-8 text-dorada-gold object-contain" />
               <span className="font-serif text-lg font-bold gold-text">دورادا</span>
             </button>
 
-            <div className="w-10" />
+            <div className="w-10 z-10" />
           </div>
         </div>
       </nav>

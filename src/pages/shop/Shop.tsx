@@ -152,10 +152,10 @@ const Shop: React.FC = () => {
               متجر دورادا
             </span>
             <h1 className="font-serif text-4xl md:text-5xl lg:text-6xl font-bold text-dorada-cream mb-4">
-              مجوهرات <span className="gold-text">فاخرة</span>
+              اكسسوارات <span className="gold-text">نازكة</span>
             </h1>
             <p className="text-dorada-cream/60 max-w-xl mx-auto">
-              اكتشف تشكيلتنا الرائعة من المجوهرات الجميلة والنازكة وبأفضل جودة
+              اكتشف تشكيلتنا الرائعة من الاكسسوارات الجميلة والنازكة وبأفضل جودة
             </p>
           </div>
         </div>
