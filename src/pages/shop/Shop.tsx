@@ -251,13 +251,18 @@ const Shop: React.FC = () => {
             </a>
 
             {/* Phone */}
-            <div className="glass-card p-6 text-center">
-              <div className="w-14 h-14 rounded-full bg-dorada-gold/20 flex items-center justify-center mx-auto mb-4">
+            <a
+              href="https://wa.me/9647507078397"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="glass-card p-6 text-center group hover:border-dorada-gold/50 transition-all block"
+            >
+              <div className="w-14 h-14 rounded-full bg-dorada-gold/20 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
                 <Phone className="w-7 h-7 text-dorada-gold" />
               </div>
               <h3 className="font-serif text-lg font-semibold text-dorada-cream mb-2">اتصل بنا</h3>
-              <p className="text-dorada-cream/60">07507078397</p>
-            </div>
+              <p className="text-dorada-cream/60 group-hover:text-dorada-gold transition-colors">07507078397</p>
+            </a>
 
             {/* Location */}
             <div className="glass-card p-6 text-center">
