@@ -333,7 +333,11 @@ const ProductCard: React.FC<{
           src={getOptimizedImageUrl(product.images[0], 300)}
           alt={product.nameAr}
           loading="lazy"
-          className="w-full h-full object-cover transition-all duration-700 group-hover:scale-110 bg-white/5 relative z-10"
+          onLoad={(e) => {
+            const target = e.target as HTMLImageElement;
+            target.classList.remove('opacity-0');
+          }}
+          className="w-full h-full object-cover transition-all duration-700 group-hover:scale-110 opacity-0 bg-white/5 relative z-10"
         />
         {/* Placeholder skeleton - visible while image is loading or if image fails */}
         <div className="absolute inset-0 bg-white/10 animate-pulse -z-10" />
