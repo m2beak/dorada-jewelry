@@ -337,6 +337,12 @@ const ProductCard: React.FC<{
             const target = e.target as HTMLImageElement;
             target.classList.remove('opacity-0');
           }}
+          onError={(e) => {
+            const target = e.target as HTMLImageElement;
+            target.classList.remove('opacity-0');
+            // If image fails, the background skeleton will be visible instead
+            console.error(`Failed to load image for product: ${product.nameAr}`, product.images[0]);
+          }}
           className="w-full h-full object-cover transition-all duration-700 group-hover:scale-110 opacity-0 bg-white/5 relative z-10"
         />
         {/* Placeholder skeleton - visible while image is loading or if image fails */}

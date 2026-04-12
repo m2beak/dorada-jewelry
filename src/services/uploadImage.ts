@@ -16,9 +16,9 @@ export const uploadImageToStorage = async (file: File): Promise<string> => {
         throw new Error('نوع الملف غير مدعوم. استخدم JPG, PNG, أو WebP');
     }
 
-    const maxSize = 5 * 1024 * 1024; // 5MB
+    const maxSize = 10 * 1024 * 1024; // 10MB
     if (file.size > maxSize) {
-        throw new Error('حجم الملف كبير جداً. الحد الأقصى 5 ميجابايت');
+        throw new Error('حجم الملف كبير جداً. الحد الأقصى 10 ميجابايت');
     }
 
     // Generate unique filename

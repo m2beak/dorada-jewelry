@@ -494,14 +494,14 @@ export const fileToBase64 = (file: File): Promise<string> => {
 
 export const validateImageFile = (file: File): { valid: boolean; error?: string } => {
   const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg'];
-  const maxSize = 50 * 1024 * 1024;
+  const maxSize = 10 * 1024 * 1024;
 
   if (!validTypes.includes(file.type)) {
     return { valid: false, error: 'نوع الملف غير مدعوم. استخدم JPG, PNG, أو WebP' };
   }
 
   if (file.size > maxSize) {
-    return { valid: false, error: 'حجم الملف كبير جداً. الحد الأقصى 20 ميجابايت' };
+    return { valid: false, error: 'حجم الملف كبير جداً. الحد الأقصى 10 ميجابايت' };
   }
 
   return { valid: true };

@@ -311,8 +311,17 @@ const ProductDetail: React.FC = () => {
                         src={getOptimizedImageUrl(prod.images[0], 400)}
                         alt={prod.nameAr}
                         loading="lazy"
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                        onLoad={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.classList.remove('opacity-0');
+                        }}
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.classList.remove('opacity-0');
+                        }}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 opacity-0"
                       />
+                      <div className="absolute inset-0 bg-white/10 animate-pulse -z-10" />
                     </div>
                     <div className="p-4">
                       <h3 className="font-serif text-lg font-semibold text-dorada-cream group-hover:text-dorada-gold transition-colors">

@@ -41,8 +41,17 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({ images, alt, className = ''
           src={getOptimizedImageUrl(images[currentIndex], 800)}
           alt={`${alt} - ${currentIndex + 1}`}
           loading="lazy"
-          className="w-full h-full object-cover transition-transform duration-500"
+          onLoad={(e) => {
+            const target = e.target as HTMLImageElement;
+            target.classList.remove('opacity-0');
+          }}
+          onError={(e) => {
+            const target = e.target as HTMLImageElement;
+            target.classList.remove('opacity-0');
+          }}
+          className="w-full h-full object-cover transition-transform duration-500 opacity-0"
         />
+        <div className="absolute inset-0 bg-white/5 animate-pulse -z-10" />
 
         {/* Navigation Arrows */}
         {images.length > 1 && (
