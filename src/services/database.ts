@@ -131,6 +131,26 @@ export const addProduct = async (product: Omit<Product, 'id' | 'createdAt' | 'up
   }
 };
 
+export const bulkAddProducts = async (newProducts: Omit<Product, 'id' | 'createdAt'>[]): Promise<{ success: boolean; error?: string }> => {
+  try {
+    const formattedProducts = newProducts.map(p => {
+      const copy = { ...p };
+      delete (copy as any).id;
+      return copy;
+    });
+
+    const { error } = await supabase
+      .from('products')
+      .insert(formattedProducts);
+
+    if (error) throw error;
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error adding products in bulk:', error);
+    return { success: false, error: error.message || 'فشل إضافة المنتجات دفعة واحدة' };
+  }
+};
+
 export const updateProduct = async (id: string, updates: Partial<Product>): Promise<{ success: boolean; error?: string }> => {
   try {
     const { error } = await supabase

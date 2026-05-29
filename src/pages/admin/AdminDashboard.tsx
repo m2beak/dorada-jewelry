@@ -30,9 +30,15 @@ import {
   ChevronDown,
   ChevronUp,
   Star,
+  FileSpreadsheet,
+  Download,
+  Upload,
+  AlertCircle,
+  RefreshCw,
 } from 'lucide-react';
 import {
   addProduct,
+  bulkAddProducts,
   updateProduct,
   deleteProduct,
   addCategory,
@@ -69,6 +75,7 @@ const AdminDashboard: React.FC = () => {
   const { data: products = [] } = useAllProducts();
   const [productSearch, setProductSearch] = useState('');
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
+  const [isCsvImportModalOpen, setIsCsvImportModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
   // Orders State (React Query)
@@ -386,16 +393,27 @@ const AdminDashboard: React.FC = () => {
                     className="w-full pr-12 pl-4 py-3 rounded-xl bg-white/5 border border-white/10 text-dorada-cream placeholder-dorada-cream/30 focus:border-dorada-gold focus:outline-none"
                   />
                 </div>
-                <button
-                  onClick={() => {
-                    setEditingProduct(null);
-                    setIsProductModalOpen(true);
-                  }}
-                  className="gold-btn flex items-center gap-2"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>إضافة منتج</span>
-                </button>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => {
+                      setIsCsvImportModalOpen(true);
+                    }}
+                    className="px-5 py-3 rounded-xl border border-dorada-gold/30 text-dorada-gold hover:bg-dorada-gold/10 font-medium text-sm flex items-center gap-2 transition-all"
+                  >
+                    <FileSpreadsheet className="w-4 h-4" />
+                    <span>استيراد من CSV</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setEditingProduct(null);
+                      setIsProductModalOpen(true);
+                    }}
+                    className="gold-btn flex items-center gap-2"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>إضافة منتج</span>
+                  </button>
+                </div>
               </div>
 
               {/* Products Grid */}
@@ -786,6 +804,22 @@ const AdminDashboard: React.FC = () => {
         <OrderModal
           order={selectedOrder}
           onClose={() => setSelectedOrder(null)}
+        />
+      )}
+
+      {/* CSV Import Modal */}
+      {isCsvImportModalOpen && (
+        <CsvImportModal
+          onClose={() => setIsCsvImportModalOpen(false)}
+          onSuccess={() => {
+            setIsCsvImportModalOpen(false);
+            queryClient.invalidateQueries({ queryKey: productKeys.all });
+            if (refreshProducts) {
+              try {
+                refreshProducts();
+              } catch (e) {}
+            }
+          }}
         />
       )}
     </div>
@@ -1491,6 +1525,370 @@ const OrderModal: React.FC<{
               <span className="text-2xl font-bold gold-text">{formatPrice(order.total)}</span>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Helper to parse CSV lines safely, accounting for quotes and commas
+function parseCSV(text: string): Record<string, string>[] {
+  const lines = text.split(/\r?\n/);
+  if (lines.length === 0) return [];
+  
+  // Parse header
+  const headers = parseCSVLine(lines[0]);
+  const result: Record<string, string>[] = [];
+  
+  for (let i = 1; i < lines.length; i++) {
+    if (!lines[i].trim()) continue;
+    const values = parseCSVLine(lines[i]);
+    const row: Record<string, string> = {};
+    headers.forEach((header, index) => {
+      row[header] = values[index] !== undefined ? values[index] : '';
+    });
+    result.push(row);
+  }
+  return result;
+}
+
+function parseCSVLine(line: string): string[] {
+  const result: string[] = [];
+  let current = '';
+  let inQuotes = false;
+  
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+    if (char === '"') {
+      if (inQuotes && line[i + 1] === '"') {
+        // Escaped quote
+        current += '"';
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (char === ',' && !inQuotes) {
+      result.push(current.trim());
+      current = '';
+    } else {
+      current += char;
+    }
+  }
+  result.push(current.trim());
+  return result;
+}
+
+// CSV Bulk Import Modal Component
+const CsvImportModal: React.FC<{
+  onClose: () => void;
+  onSuccess: () => void;
+}> = ({ onClose, onSuccess }) => {
+  const { showToast } = useApp();
+  const [file, setFile] = useState<File | null>(null);
+  const [isImporting, setIsImporting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [importedCount, setImportedCount] = useState<number | null>(null);
+
+  const downloadCsvTemplate = () => {
+    const headers = [
+      'name',
+      'nameAr',
+      'description',
+      'descriptionAr',
+      'price',
+      'originalPrice',
+      'category',
+      'categoryAr',
+      'quantity',
+      'sku',
+      'images'
+    ];
+    
+    const sampleRow = [
+      'Dorada Diamond Ring',
+      'خاتم ألماس دورادا',
+      'Elegant 18k white gold diamond ring',
+      'خاتم ألماس أنيق من الذهب الأبيض عيار 18',
+      '450.00',
+      '550.00',
+      'rings',
+      'خواتم',
+      '12',
+      'DR-R005',
+      'https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=800, https://images.unsplash.com/photo-1603561591411-07134e71a2a9?w=800'
+    ];
+    
+    // Join with newline, ensuring values are quoted to handle commas in description/images
+    const csvContent = "\uFEFF" + [ // BOM for UTF-8 Excel support
+      headers.join(','),
+      sampleRow.map(v => `"${v.replace(/"/g, '""')}"`).join(',')
+    ].join('\r\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", "dorada_products_template.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files?.[0];
+    if (selectedFile) {
+      if (selectedFile.name.endsWith('.csv') || selectedFile.type === 'text/csv') {
+        setFile(selectedFile);
+        setError(null);
+        setImportedCount(null);
+      } else {
+        setError('يرجى اختيار ملف بصيغة CSV فقط');
+        setFile(null);
+      }
+    }
+  };
+
+  const handleImport = async () => {
+    if (!file) {
+      setError('يرجى تحديد ملف CSV أولاً');
+      return;
+    }
+
+    setIsImporting(true);
+    setError(null);
+
+    try {
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        try {
+          const text = e.target?.result as string;
+          if (!text) {
+            throw new Error('الملف فارغ أو تعذر قراءته');
+          }
+
+          // Parse CSV
+          const rows = parseCSV(text);
+          if (rows.length === 0) {
+            throw new Error('لا توجد بيانات صالحة في ملف CSV');
+          }
+
+          // Map CSV rows to Product models
+          const parsedProducts: any[] = [];
+          const skusSeen = new Set<string>();
+
+          for (let i = 0; i < rows.length; i++) {
+            const row = rows[i];
+            const rowNum = i + 2; // header is row 1, index starts at 0
+
+            // Validation
+            const name = row.name?.trim();
+            const nameAr = row.nameAr?.trim();
+            const price = parseFloat(row.price);
+            const category = row.category?.trim();
+            const categoryAr = row.categoryAr?.trim();
+            const sku = row.sku?.trim() || `CSV-AUTO-${uuidv4().substring(0, 8)}`;
+
+            if (!name || !nameAr) {
+              throw new Error(`السطر ${rowNum}: حقل الاسم بالإنجليزي والعربي مطلوب.`);
+            }
+            if (isNaN(price) || price <= 0) {
+              throw new Error(`السطر ${rowNum}: حقل السعر مطلوب ويجب أن يكون رقماً أكبر من صفر.`);
+            }
+            if (!category || !categoryAr) {
+              throw new Error(`السطر ${rowNum}: حقل القسم بالإنجليزي والعربي مطلوب.`);
+            }
+            if (skusSeen.has(sku)) {
+              throw new Error(`السطر ${rowNum}: رمز الـ SKU مكرر في الملف: ${sku}`);
+            }
+            skusSeen.add(sku);
+
+            // Images parsing (comma separated list of URLs)
+            const images = row.images 
+              ? row.images.split(',').map(url => url.trim()).filter(url => url.startsWith('http')) 
+              : [];
+
+            if (images.length === 0) {
+              // Add a placeholder image if no images provided
+              images.push('https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0?w=800');
+            }
+
+            const qty = parseInt(row.quantity) || 0;
+            const originalPrice = parseFloat(row.originalPrice) || undefined;
+
+            parsedProducts.push({
+              name,
+              nameAr,
+              description: row.description?.trim() || '',
+              descriptionAr: row.descriptionAr?.trim() || '',
+              price,
+              originalPrice,
+              images,
+              category,
+              categoryAr,
+              inStock: qty > 0,
+              featured: row.featured?.trim().toLowerCase() === 'true',
+              quantity: qty,
+              sku,
+              features: [],
+              weight: row.weight?.trim() || undefined,
+              material: row.material?.trim() || undefined,
+              size: row.size?.trim() || undefined,
+              color: row.color?.trim() || undefined,
+              warranty: row.warranty?.trim() || undefined,
+            });
+          }
+
+          // Database Bulk Insert
+          const result = await bulkAddProducts(parsedProducts);
+          if (!result.success) {
+            throw new Error(result.error || 'فشل إدخال البيانات في قاعدة البيانات');
+          }
+
+          setImportedCount(parsedProducts.length);
+          showToast(`تم استيراد ${parsedProducts.length} منتج بنجاح!`, 'success');
+          onSuccess();
+        } catch (err: any) {
+          console.error(err);
+          setError(err.message || 'حدث خطأ غير متوقع أثناء معالجة الملف');
+        } finally {
+          setIsImporting(false);
+        }
+      };
+
+      reader.onerror = () => {
+        setError('فشل قراءة الملف من الجهاز');
+        setIsImporting(false);
+      };
+
+      reader.readAsText(file, 'utf-8');
+    } catch (err: any) {
+      setError(err.message || 'خطأ أثناء قراءة الملف');
+      setIsImporting(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 overflow-y-auto">
+      <div className="bg-[#0a0f18] border border-white/10 rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl relative">
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-white/5 text-right" dir="rtl">
+          <h2 className="font-serif text-xl font-bold text-dorada-cream flex items-center gap-2">
+            <FileSpreadsheet className="w-5 h-5 text-dorada-gold" />
+            <span>استيراد المنتجات من ملف CSV</span>
+          </h2>
+          <button onClick={onClose} className="p-1 rounded-lg text-dorada-cream/40 hover:text-dorada-cream hover:bg-white/5 transition-colors">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="p-6 space-y-6 max-h-[70vh] overflow-y-auto custom-scrollbar text-right" dir="rtl">
+          {/* Instructions box */}
+          <div className="p-4 rounded-xl bg-white/5 border border-white/10 space-y-3 text-xs leading-relaxed text-dorada-cream/80">
+            <h3 className="font-semibold text-sm text-dorada-gold flex items-center gap-1.5">
+              💡 تعليمات وتنسيق الملف:
+            </h3>
+            <ul className="list-disc list-inside space-y-1.5 text-right">
+              <li>
+                يجب أن يحتوي السطر الأول من الملف على العناوين التالية بالضبط بالإنجليزية:
+                <code className="block bg-black/30 p-1.5 rounded font-mono text-[10px] text-center my-1 select-all" dir="ltr">
+                  name, nameAr, description, descriptionAr, price, originalPrice, category, categoryAr, quantity, sku, images
+                </code>
+              </li>
+              <li>
+                <strong className="text-dorada-gold">طريقة إضافة الصور:</strong> اكتب روابط الصور المباشرة (مثل روابط من Imgur أو Postimages) في حقل <code className="bg-black/20 px-1 py-0.5 rounded font-mono text-[10px]" dir="ltr">images</code> وافصل بين كل رابط بـ <strong className="text-white">فاصلة (,)</strong>.
+                <br />
+                <span className="text-dorada-cream/50">مثال: <code className="text-[10px] break-all" dir="ltr">https://example.com/img1.jpg, https://example.com/img2.jpg</code></span>
+              </li>
+              <li>
+                القيم المطلوبة لكل منتج: الاسم بالعربي والإنجليزي، السعر، كود الـ SKU (فريد)، ورمز واسم القسم.
+              </li>
+              <li>
+                إذا كانت الكمية أكبر من 0، فسيتم تعيين المنتج تلقائياً كـ "متوفر في المخزن".
+              </li>
+            </ul>
+
+            <div className="pt-2 flex justify-start">
+              <button 
+                onClick={downloadCsvTemplate}
+                className="text-xs text-dorada-gold hover:text-dorada-gold-light flex items-center gap-1 bg-dorada-gold/10 border border-dorada-gold/20 px-3 py-1.5 rounded-lg transition-all"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>تحميل نموذج CSV التجريبي</span>
+              </button>
+            </div>
+          </div>
+
+          {/* File input / Drop zone */}
+          <div className="space-y-2">
+            <label className="block text-xs font-semibold text-dorada-cream/60">اختر ملف الـ CSV من جهازك</label>
+            <div className="border border-dashed border-white/20 rounded-xl p-8 text-center bg-white/5 hover:border-dorada-gold/40 transition-colors relative cursor-pointer">
+              <input
+                type="file"
+                accept=".csv"
+                onChange={handleFileChange}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                disabled={isImporting}
+              />
+              <div className="flex flex-col items-center gap-3">
+                <Upload className="w-10 h-10 text-dorada-cream/30" />
+                {file ? (
+                  <div className="space-y-1">
+                    <p className="text-sm font-semibold text-dorada-gold">{file.name}</p>
+                    <p className="text-xs text-dorada-cream/40 font-mono">{(file.size / 1024).toFixed(1)} KB</p>
+                  </div>
+                ) : (
+                  <div>
+                    <p className="text-sm text-dorada-cream font-medium">اضغط لتحديد الملف أو اسحبه هنا</p>
+                    <p className="text-xs text-dorada-cream/40 mt-1">تنسيق .csv فقط</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Status Notifications */}
+          {error && (
+            <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs flex items-center gap-2 leading-relaxed">
+              <AlertCircle className="w-5 h-5 flex-shrink-0" />
+              <span>{error}</span>
+            </div>
+          )}
+
+          {importedCount !== null && (
+            <div className="p-4 rounded-xl bg-green-500/10 border border-green-500/20 text-green-400 text-xs flex items-center gap-2">
+              <CheckCircle className="w-5 h-5 flex-shrink-0" />
+              <span>تم استيراد {importedCount} منتج بنجاح في قاعدة البيانات!</span>
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="px-6 py-4 border-t border-white/5 flex justify-start gap-3 bg-[#070b11]" dir="rtl">
+          <button
+            onClick={handleImport}
+            disabled={isImporting || !file || importedCount !== null}
+            className="gold-btn py-2.5 px-6 text-xs font-semibold flex items-center gap-2 disabled:opacity-50"
+          >
+            {isImporting ? (
+              <>
+                <RefreshCw className="w-4 h-4 animate-spin" />
+                <span>جاري الاستيراد...</span>
+              </>
+            ) : (
+              <>
+                <Check className="w-4 h-4" />
+                <span>بدء الاستيراد</span>
+              </>
+            )}
+          </button>
+          <button
+            onClick={onClose}
+            disabled={isImporting}
+            className="px-5 py-2.5 rounded-xl border border-white/10 text-dorada-cream/70 hover:bg-white/5 transition-all text-xs font-semibold"
+          >
+            إلغاء
+          </button>
         </div>
       </div>
     </div>
