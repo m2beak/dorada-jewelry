@@ -24,6 +24,7 @@ import { getOptimizedImageUrl } from '@/utils/image';
 import { useProducts, useCategories } from '@/hooks/useProducts';
 import { useBackgrounds } from '@/hooks/useBackgrounds';
 import { useReviews, useAddReviewMutation } from '@/hooks/useReviews';
+import { useOrders } from '@/hooks/useOrders';
 
 // Scroll Reveal Helper
 const ScrollReveal: React.FC<{ children: React.ReactNode; delay?: number }> = ({ children, delay = 0 }) => {
@@ -135,7 +136,7 @@ const AutoScrollRow: React.FC<{
   const marqueeItems = React.useMemo(() => {
     if (shuffledProducts.length === 0) return [];
     let base = [...shuffledProducts];
-    while (base.length < 8) {
+    while (base.length < 15) {
       base = [...base, ...shuffledProducts];
     }
     return [...base, ...base];
@@ -193,6 +194,38 @@ const Shop: React.FC = () => {
   // Real Reviews Query & Mutation
   const { data: dbReviews = [], refetch: refetchReviews } = useReviews();
   const addReviewMutation = useAddReviewMutation();
+
+  // Orders Query (for Best Sellers)
+  const { data: orders = [] } = useOrders();
+
+  // Memoize Featured Products (القطع المميزة)
+  const featuredProducts = React.useMemo(() => {
+    return products.filter(p => p.featured);
+  }, [products]);
+
+  // Memoize Best Selling Products (الأكثر مبيعاً) dynamically from order data
+  const bestSellingProducts = React.useMemo(() => {
+    if (products.length === 0) return [];
+    
+    const salesMap: Record<string, number> = {};
+    orders.forEach((order) => {
+      if (order.status === 'cancelled') return;
+      order.items.forEach((item) => {
+        salesMap[item.productId] = (salesMap[item.productId] || 0) + item.quantity;
+      });
+    });
+
+    const sorted = [...products].sort((a, b) => {
+      const salesA = salesMap[a.id] || 0;
+      const salesB = salesMap[b.id] || 0;
+      if (salesB === salesA) {
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      }
+      return salesB - salesA;
+    });
+
+    return sorted.slice(0, 15);
+  }, [products, orders]);
 
   // Review Modal State
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
@@ -485,7 +518,7 @@ const Shop: React.FC = () => {
                 transition={{ duration: 0.6, delay: 0.1 }}
                 className="inline-block px-4 py-1 rounded-full border border-dorada-gold/30 text-[10px] sm:text-xs font-semibold text-dorada-gold tracking-widest uppercase mb-6 bg-black/40"
               >
-                مجوهرات دورادا الفاخرة
+                اكسسوارات دورادا الجميلة
               </motion.span>
 
               <motion.h1
@@ -503,7 +536,7 @@ const Shop: React.FC = () => {
                 transition={{ duration: 0.8, delay: 0.5 }}
                 className="text-dorada-cream/80 max-w-xl text-sm sm:text-base md:text-lg mb-8 leading-relaxed font-light"
               >
-                نسجنا من خيوط الفخامة والتفاصيل الدقيقة مجوهرات تليق بجمالك ونعومتك.
+                استكشفي اكسسوارتنا المختارة بعناية التي تليق بجمالك ونعومتك.
               </motion.p>
 
               <motion.div
@@ -541,7 +574,7 @@ const Shop: React.FC = () => {
                     شنو تريدين تتسوقين ؟
                   </h2>
                   <p className="text-xs sm:text-sm text-dorada-cream/50 max-w-md mx-auto">
-                    اختر التصنيف المفضل لديك وتصفح قطع المجوهرات الفريدة المصممة خصيصاً لك.
+                    اختاري الموديل المفضل لديكي وتصفح  اكسسوارات الفريدة المختارة خصيصاً لكي.
                   </p>
                 </div>
               </ScrollReveal>
@@ -568,6 +601,41 @@ const Shop: React.FC = () => {
           {/* Autoplay product carousels based on category */}
           <section className="py-12 bg-[#070b11] border-t border-white/5">
             <div className="max-w-7xl mx-auto">
+              
+              {/* FEATURED PRODUCTS SECTION (المنتجات المميزة) - ABOVE ALL CAROUSELS */}
+              {featuredProducts.length > 0 && (
+                <ScrollReveal>
+                  <div className="mb-16 sm:mb-20 border border-dorada-gold/20 bg-[#121c2c]/40 rounded-3xl p-4 sm:p-6 shadow-[0_0_50px_rgba(212,175,55,0.05)] relative overflow-hidden">
+                    {/* Decorative glowing gold orb behind */}
+                    <div className="absolute top-0 right-0 w-72 h-72 bg-dorada-gold/5 rounded-full filter blur-[80px] pointer-events-none" />
+                    
+                    {/* Header */}
+                    <div className="flex items-center justify-between mb-6 px-4 border-r-2 border-dorada-gold pr-3 relative z-10">
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-serif text-xl sm:text-2xl font-bold gold-text">القطع المميزة</h3>
+                        <span className="animate-pulse flex h-2 w-2 rounded-full bg-dorada-gold shadow-[0_0_10px_#D4AF37]" />
+                      </div>
+                      <span className="text-[10px] sm:text-xs text-dorada-gold/80 bg-dorada-gold/10 px-3 py-1 rounded-full font-medium tracking-wide border border-dorada-gold/20">
+                        مختاراتنا الفاخرة لكم
+                      </span>
+                    </div>
+
+                    {/* Moving Carousel */}
+                    <AutoScrollRow
+                      products={featuredProducts}
+                      direction="right"
+                      onProductClick={(p) => navigate(`/product/${p.id}`)}
+                      onAddToCart={handleAddToCart}
+                      onAddToWishlist={handleAddToWishlist}
+                      onQuickView={handleQuickView}
+                      isInWishlist={isInWishlistFn}
+                      formatPrice={formatPrice}
+                    />
+                  </div>
+                </ScrollReveal>
+              )}
+
+              {/* Standard Category Carousels */}
               {categories.map((cat, index) => {
                 const catProducts = products.filter(p => p.category === cat.name);
                 if (catProducts.length === 0) return null;
@@ -608,6 +676,40 @@ const Shop: React.FC = () => {
                   </ScrollReveal>
                 );
               })}
+
+              {/* BEST SELLERS SECTION (الأكثر مبيعاً) - BOTTOM OF ALL CAROUSELS */}
+              {bestSellingProducts.length > 0 && (
+                <ScrollReveal>
+                  <div className="mb-8 border border-dorada-gold/20 bg-[#121c2c]/40 rounded-3xl p-4 sm:p-6 shadow-[0_0_50px_rgba(212,175,55,0.05)] relative overflow-hidden">
+                    {/* Decorative glowing gold orb behind */}
+                    <div className="absolute bottom-0 left-0 w-72 h-72 bg-dorada-gold/5 rounded-full filter blur-[80px] pointer-events-none" />
+                    
+                    {/* Header */}
+                    <div className="flex items-center justify-between mb-6 px-4 border-r-2 border-dorada-gold pr-3 relative z-10">
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-serif text-xl sm:text-2xl font-bold gold-text">الأكثر مبيعاً وطلباً</h3>
+                        <span className="animate-pulse flex h-2 w-2 rounded-full bg-dorada-gold shadow-[0_0_10px_#D4AF37]" />
+                      </div>
+                      <span className="text-[10px] sm:text-xs text-dorada-gold/80 bg-dorada-gold/10 px-3 py-1 rounded-full font-medium tracking-wide border border-dorada-gold/20">
+                        القطع الأكثر طلباً ومحبة
+                      </span>
+                    </div>
+
+                    {/* Moving Carousel */}
+                    <AutoScrollRow
+                      products={bestSellingProducts}
+                      direction="left"
+                      onProductClick={(p) => navigate(`/product/${p.id}`)}
+                      onAddToCart={handleAddToCart}
+                      onAddToWishlist={handleAddToWishlist}
+                      onQuickView={handleQuickView}
+                      isInWishlist={isInWishlistFn}
+                      formatPrice={formatPrice}
+                    />
+                  </div>
+                </ScrollReveal>
+              )}
+
             </div>
           </section>
 
@@ -743,7 +845,7 @@ const Shop: React.FC = () => {
                   تريد قطعة مخصصة تناسب ذوقك؟
                 </h2>
                 <p className="text-xs sm:text-sm text-dorada-cream/70 max-w-xl mb-8 leading-relaxed">
-                  فريقنا من الصاغة المحترفين يسعده تقديم المساعدة في تفصيل وتصميم قطعة مجوهرات أحلامك الفريدة تماماً.
+                  تواصلي ويانا عن طريق الواتساب واختاري القطعة الي تريديها و ما راح نقصر وياج لمساعدتج باختيار قطعتج المناسبة.
                 </p>
                 <a
                   href="https://wa.me/9647507078397"
