@@ -39,6 +39,9 @@ export const BackgroundsTab: React.FC = () => {
   const { showToast } = useApp();
   const queryClient = useQueryClient();
   const [uploadingSection, setUploadingSection] = useState<string | null>(null);
+  const [showWarning, setShowWarning] = useState(() => {
+    return localStorage.getItem('dorada_dismiss_bg_warning') !== 'true';
+  });
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, sectionKey: string) => {
     const file = e.target.files?.[0];
@@ -131,10 +134,6 @@ export const BackgroundsTab: React.FC = () => {
       </div>
     );
   }
-
-  const [showWarning, setShowWarning] = useState(() => {
-    return localStorage.getItem('dorada_dismiss_bg_warning') !== 'true';
-  });
 
   return (
     <div className="space-y-8">
