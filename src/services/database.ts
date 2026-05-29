@@ -543,6 +543,48 @@ export const updateTelegramConfig = async (config: TelegramConfig): Promise<{ su
 
 
 
+// --- Background Operations (Supabase) ---
+export const getBackgrounds = async (): Promise<Record<string, string>> => {
+  try {
+    const { data, error } = await supabase
+      .from('backgrounds')
+      .select('*');
+    
+    if (error) {
+      console.warn('Backgrounds table query failed or not found, using default gradient overlays:', error.message);
+      return {};
+    }
+    
+    const backgroundsMap: Record<string, string> = {};
+    if (data) {
+      data.forEach((bg: any) => {
+        backgroundsMap[bg.section_key] = bg.image_url;
+      });
+    }
+    return backgroundsMap;
+  } catch (error) {
+    console.error('Error fetching backgrounds:', error);
+    return {};
+  }
+};
+
+export const updateBackground = async (sectionKey: string, imageUrl: string): Promise<{ success: boolean; error?: string }> => {
+  try {
+    const { error } = await supabase
+      .from('backgrounds')
+      .upsert({
+        section_key: sectionKey,
+        image_url: imageUrl
+      });
+
+    if (error) throw error;
+    return { success: true };
+  } catch (error: any) {
+    console.error(`Error updating background for ${sectionKey}:`, error);
+    return { success: false, error: error.message || 'فشل تحديث الخلفية' };
+  }
+};
+
 function validateOrder(order: Partial<Order>): string | null {
   if (!order.customerName) return 'اسم العميل مطلوب';
   if (!order.customerPhone) return 'رقم الهاتف مطلوب';

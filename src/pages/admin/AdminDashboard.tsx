@@ -44,6 +44,7 @@ import {
   formatPrice,
   validateImageFile,
 } from '@/services/database';
+import { BackgroundsTab } from './BackgroundsTab';
 import { revokeAdminAccess } from '@/services/security';
 import { testTelegramConnection, getBotInfo } from '@/services/telegram';
 import { useApp } from '@/contexts/AppContext';
@@ -58,7 +59,7 @@ import { orderKeys } from '@/hooks/useOrders';
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { setAdmin, refreshProducts, showToast } = useApp();
-  const [activeTab, setActiveTab] = useState<'products' | 'orders' | 'categories' | 'settings'>('products');
+  const [activeTab, setActiveTab] = useState<'products' | 'orders' | 'categories' | 'settings' | 'backgrounds'>('products');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const queryClient = useQueryClient();
 
@@ -275,6 +276,7 @@ const AdminDashboard: React.FC = () => {
               { id: 'products', label: 'المنتجات', icon: Package },
               { id: 'orders', label: 'الطلبات', icon: ShoppingCart },
               { id: 'categories', label: 'التصنيفات', icon: LayoutDashboard },
+              { id: 'backgrounds', label: 'الخلفيات والبنرات', icon: ImageIcon },
               { id: 'settings', label: 'الإعدادات', icon: Settings },
             ].map((item) => (
               <button
@@ -325,6 +327,7 @@ const AdminDashboard: React.FC = () => {
                 {activeTab === 'orders' && 'إدارة الطلبات'}
                 {activeTab === 'categories' && 'إدارة التصنيفات'}
                 {activeTab === 'settings' && 'الإعدادات'}
+                {activeTab === 'backgrounds' && 'الخلفيات والبنرات'}
               </h1>
             </div>
           </div>
@@ -638,6 +641,11 @@ const AdminDashboard: React.FC = () => {
                 </div>
               </div>
             </div>
+          )}
+
+          {/* Backgrounds Tab */}
+          {activeTab === 'backgrounds' && (
+            <BackgroundsTab />
           )}
         </div>
       </main>
