@@ -178,4 +178,33 @@
   .scrollbar-hide::-webkit-scrollbar {
     display: none;  /* Chrome, Safari and Opera */
   }
+
+  /* Marquee animation classes */
+  .animate-marquee-left {
+    will-change: transform;
+    animation: marquee-left var(--marquee-duration, 40s) linear infinite;
+  }
+
+  .animate-marquee-right {
+    will-change: transform;
+    animation: marquee-right var(--marquee-duration, 40s) linear infinite;
+  }
+}
+
+@keyframes marquee-left {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes marquee-right {
+  0% {
+    transform: translateX(-50%);
+  }
+  100% {
+    transform: translateX(0);
+  }
 }

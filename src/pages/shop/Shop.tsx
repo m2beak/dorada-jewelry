@@ -112,23 +112,18 @@ const shuffleArray = <T,>(array: T[]): T[] => {
 };
 
 // Autoplay Horizontal Product Scroll Component (Optimized for mobile touch events & infinite circular loop)
+// Autoplay Horizontal Product Scroll Component (Smooth hardware-accelerated CSS Marquee)
 const AutoScrollRow: React.FC<{
   products: Product[];
+  direction: 'left' | 'right';
   onProductClick: (product: Product) => void;
   onAddToCart: (product: Product) => void;
   onAddToWishlist: (e: React.MouseEvent, productId: string) => void;
   onQuickView: (e: React.MouseEvent, product: Product) => void;
   isInWishlist: (productId: string) => boolean;
   formatPrice: (price: number) => string;
-}> = ({ products, onProductClick, onAddToCart, onAddToWishlist, onQuickView, isInWishlist, formatPrice }) => {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [isHovered, setIsHovered] = useState(false);
-  const [isMouseDown, setIsMouseDown] = useState(false);
-  const [isTouched, setIsTouched] = useState(false);
-  const [startX, setStartX] = useState(0);
-  const [scrollLeftState, setScrollLeftState] = useState(0);
-  const touchTimeoutRef = useRef<number | null>(null);
-
+}> = ({ products, direction, onProductClick, onAddToCart, onAddToWishlist, onQuickView, isInWishlist, formatPrice }) => {
+  
   // Shuffle products on mount and limit to max 15 random items to keep DOM light
   const shuffledProducts = React.useMemo(() => {
     if (products.length === 0) return [];
@@ -136,170 +131,46 @@ const AutoScrollRow: React.FC<{
     return shuffled.slice(0, 15);
   }, [products]);
 
-  const handleMouseDown = (e: React.MouseEvent) => {
-    const container = containerRef.current;
-    if (!container) return;
-    setIsMouseDown(true);
-    setStartX(e.pageX - container.offsetLeft);
-    setScrollLeftState(container.scrollLeft);
-  };
-
-  const handleMouseUpOrLeave = () => {
-    setIsMouseDown(false);
-  };
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isMouseDown) return;
-    const container = containerRef.current;
-    if (!container) return;
-    e.preventDefault();
-    const x = e.pageX - container.offsetLeft;
-    const walk = (x - startX) * 1.5;
-    container.scrollLeft = scrollLeftState - walk;
-  };
-
-  const handleTouchStart = () => {
-    setIsTouched(true);
-    if (touchTimeoutRef.current) {
-      window.clearTimeout(touchTimeoutRef.current);
-      touchTimeoutRef.current = null;
+  // Repeat and duplicate items for marquee so we have enough elements to loop seamlessly
+  const marqueeItems = React.useMemo(() => {
+    if (shuffledProducts.length === 0) return [];
+    let base = [...shuffledProducts];
+    while (base.length < 8) {
+      base = [...base, ...shuffledProducts];
     }
-  };
-
-  const handleTouchEnd = () => {
-    // Resume auto scroll after 3 seconds of no touching
-    touchTimeoutRef.current = window.setTimeout(() => {
-      setIsTouched(false);
-    }, 3000);
-  };
-
-  useEffect(() => {
-    return () => {
-      if (touchTimeoutRef.current) {
-        window.clearTimeout(touchTimeoutRef.current);
-      }
-    };
-  }, []);
-
-  // Initialize scroll position to the center of the middle copy on load
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container || shuffledProducts.length === 0) return;
-
-    // We need to wait for layout to render to get scrollWidth
-    const timer = setTimeout(() => {
-      const scrollWidth = container.scrollWidth;
-      const oneLoopWidth = scrollWidth / 3;
-      const isRTL = document.dir === 'rtl' || document.documentElement.dir === 'rtl';
-
-      if (isRTL) {
-        container.scrollLeft = -oneLoopWidth;
-      } else {
-        container.scrollLeft = oneLoopWidth;
-      }
-    }, 50);
-
-    return () => clearTimeout(timer);
+    return [...base, ...base];
   }, [shuffledProducts]);
 
-  // Seamless circular linked list carousel looping logic on scroll boundary crossing
-  const handleScroll = () => {
-    const container = containerRef.current;
-    if (!container || shuffledProducts.length === 0) return;
+  if (marqueeItems.length === 0) return null;
 
-    const scrollWidth = container.scrollWidth;
-    const scrollLeft = container.scrollLeft;
-    const oneLoopWidth = scrollWidth / 3;
-    const isRTL = document.dir === 'rtl' || document.documentElement.dir === 'rtl';
-
-    if (isRTL) {
-      // In RTL, scrollLeft goes negative
-      // We want to keep the scroll position in the middle copy (between -oneLoopWidth and -2 * oneLoopWidth)
-      if (scrollLeft <= -2 * oneLoopWidth) {
-        // Scroll too far left (towards the end) -> jump right by one loop width (closer to 0)
-        container.scrollLeft += oneLoopWidth;
-      } else if (scrollLeft >= -5) {
-        // Scroll too far right (towards the start) -> jump left by one loop width
-        container.scrollLeft -= oneLoopWidth;
-      }
-    } else {
-      // In LTR, scrollLeft is positive
-      // We want to keep the scroll position in the middle copy (between oneLoopWidth and 2 * oneLoopWidth)
-      if (scrollLeft >= 2 * oneLoopWidth) {
-        // Scroll too far right (towards the end) -> jump left by one loop width (closer to 0)
-        container.scrollLeft -= oneLoopWidth;
-      } else if (scrollLeft <= 5) {
-        // Scroll too far left (towards the start) -> jump right by one loop width
-        container.scrollLeft += oneLoopWidth;
-      }
-    }
-  };
-
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container || shuffledProducts.length === 0) return;
-
-    let animationId: number;
-    let lastTime = performance.now();
-
-    const tick = (now: number) => {
-      const delta = Math.min((now - lastTime) / 16.666, 3);
-      lastTime = now;
-
-      if (isHovered || isMouseDown || isTouched) {
-        animationId = requestAnimationFrame(tick);
-        return;
-      }
-
-      const isRTL = document.dir === 'rtl' || document.documentElement.dir === 'rtl';
-      const step = 0.8 * delta;
-
-      if (isRTL) {
-        container.scrollLeft -= step;
-      } else {
-        container.scrollLeft += step;
-      }
-
-      animationId = requestAnimationFrame(tick);
-    };
-
-    animationId = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(animationId);
-  }, [isHovered, isMouseDown, isTouched, shuffledProducts]);
-
-  // Duplicate items 3 times for infinite circular scrolling feel
-  const scrollItems = [...shuffledProducts, ...shuffledProducts, ...shuffledProducts];
+  const animationClass = direction === 'left' ? 'animate-marquee-left' : 'animate-marquee-right';
 
   return (
-    <div
-      ref={containerRef}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => {
-        setIsHovered(false);
-        handleMouseUpOrLeave();
-      }}
-      onMouseDown={handleMouseDown}
-      onMouseUp={handleMouseUpOrLeave}
-      onMouseMove={handleMouseMove}
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
-      onScroll={handleScroll}
-      className="flex gap-4 overflow-x-auto scrollbar-hide py-3 px-4 lg:px-8 cursor-grab active:cursor-grabbing select-none"
-      style={{ scrollBehavior: isMouseDown || isTouched ? 'auto' : 'smooth' }}
-    >
-      {scrollItems.map((product, index) => (
-        <div key={`${product.id}-${index}`} className="w-52 sm:w-64 flex-shrink-0">
-          <ProductCard
-            product={product}
-            onAddToCart={onAddToCart}
-            onAddToWishlist={onAddToWishlist}
-            onQuickView={onQuickView}
-            isInWishlist={isInWishlist(product.id)}
-            onClick={() => onProductClick(product)}
-            formatPrice={formatPrice}
-          />
-        </div>
-      ))}
+    <div className="w-full overflow-hidden py-3 relative select-none">
+      {/* Side gradient overlays to create a fading cinema tape look */}
+      <div className="absolute top-0 bottom-0 left-0 w-8 sm:w-16 bg-gradient-to-r from-[#070b11] to-transparent z-10 pointer-events-none" />
+      <div className="absolute top-0 bottom-0 right-0 w-8 sm:w-16 bg-gradient-to-l from-[#070b11] to-transparent z-10 pointer-events-none" />
+
+      <div
+        className={`flex gap-4 min-w-max hover:[animation-play-state:paused] ${animationClass}`}
+        style={{
+          '--marquee-duration': `${marqueeItems.length * 2.8}s`,
+        } as React.CSSProperties}
+      >
+        {marqueeItems.map((product, index) => (
+          <div key={`${product.id}-${index}`} className="w-52 sm:w-64 flex-shrink-0">
+            <ProductCard
+              product={product}
+              onAddToCart={onAddToCart}
+              onAddToWishlist={onAddToWishlist}
+              onQuickView={onQuickView}
+              isInWishlist={isInWishlist(product.id)}
+              onClick={() => onProductClick(product)}
+              formatPrice={formatPrice}
+            />
+          </div>
+        ))}
+      </div>
     </div>
   );
 };
@@ -697,7 +568,7 @@ const Shop: React.FC = () => {
           {/* Autoplay product carousels based on category */}
           <section className="py-12 bg-[#070b11] border-t border-white/5">
             <div className="max-w-7xl mx-auto">
-              {categories.map((cat) => {
+              {categories.map((cat, index) => {
                 const catProducts = products.filter(p => p.category === cat.name);
                 if (catProducts.length === 0) return null;
 
@@ -725,6 +596,7 @@ const Shop: React.FC = () => {
                       {/* Moving Carousel */}
                       <AutoScrollRow
                         products={catProducts}
+                        direction={index % 2 === 0 ? 'right' : 'left'}
                         onProductClick={(p) => navigate(`/product/${p.id}`)}
                         onAddToCart={handleAddToCart}
                         onAddToWishlist={handleAddToWishlist}
