@@ -147,6 +147,7 @@ export interface Prize {
   name: string;
   nameAr: string;
   chance: number; // percentage (e.g. 10 for 10%)
+  imageUrl?: string;
 }
 
 export interface WheelSettings {

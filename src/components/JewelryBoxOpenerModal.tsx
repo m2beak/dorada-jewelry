@@ -223,7 +223,13 @@ export const JewelryBoxOpenerModal: React.FC<JewelryBoxOpenerModalProps> = ({ se
                             : 'opacity-50'
                         }`}
                       >
-                        <Gift className={`w-4 h-4 sm:w-6 sm:h-6 mb-1 sm:mb-1.5 ${isSelected ? 'text-dorada-gold animate-bounce' : 'text-dorada-cream/40'}`} />
+                        {prize.imageUrl ? (
+                          <div className="w-10 h-10 sm:w-16 sm:h-16 rounded-lg overflow-hidden border border-dorada-gold/25 mb-1.5 flex-shrink-0 bg-[#070b11]">
+                            <img src={prize.imageUrl} alt={prize.nameAr} className="w-full h-full object-cover" />
+                          </div>
+                        ) : (
+                          <Gift className={`w-4 h-4 sm:w-6 sm:h-6 mb-1 sm:mb-1.5 ${isSelected ? 'text-dorada-gold animate-bounce' : 'text-dorada-cream/40'}`} />
+                        )}
                         <span className="text-[10px] sm:text-xs text-dorada-cream/45 uppercase tracking-wider font-mono">الهدية</span>
                         <span className="text-[11px] sm:text-sm font-bold text-dorada-cream whitespace-nowrap mt-0.5">{prize.nameAr}</span>
                       </motion.div>

@@ -114,7 +114,7 @@ const shuffleArray = <T,>(array: T[]): T[] => {
   return arr;
 };
 
-// Autoplay Horizontal Product Scroll Component (Smooth hardware-accelerated CSS Marquee)
+// Autoplay Horizontal Product Scroll Component (Smooth, touch/drag scrollable, circular loop)
 const AutoScrollRow: React.FC<{
   products: Product[];
   direction: 'left' | 'right';
@@ -143,28 +143,122 @@ const AutoScrollRow: React.FC<{
     return base;
   }, [shuffledProducts]);
 
+  const containerRef = React.useRef<HTMLDivElement>(null);
+  const [isUserInteracting, setIsUserInteracting] = React.useState(false);
+  const [isDragging, setIsDragging] = React.useState(false);
+  const [startX, setStartX] = React.useState(0);
+  const [scrollLeftState, setScrollLeftState] = React.useState(0);
+  
+  const stateRef = React.useRef({ isUserInteracting, isDragging });
+  React.useEffect(() => {
+    stateRef.current = { isUserInteracting, isDragging };
+  }, [isUserInteracting, isDragging]);
+
+  React.useEffect(() => {
+    const container = containerRef.current;
+    if (!container || trackItems.length === 0) return;
+
+    let animationFrameId: number;
+    let lastTime = performance.now();
+    
+    // Smooth speed: 45 pixels per second
+    const speed = 45;
+
+    // Set initial scroll position to middle of the tracks for right scroll to have room
+    if (direction === 'right') {
+      container.scrollLeft = container.scrollWidth / 2;
+    }
+
+    const step = (time: number) => {
+      const delta = (time - lastTime) / 1000;
+      lastTime = time;
+
+      if (!stateRef.current.isUserInteracting && !stateRef.current.isDragging) {
+        let newScroll = container.scrollLeft + (direction === 'left' ? speed : -speed) * delta;
+        const halfWidth = container.scrollWidth / 2;
+
+        if (direction === 'left') {
+          if (newScroll >= halfWidth) {
+            newScroll -= halfWidth;
+          }
+        } else {
+          if (newScroll <= 0) {
+            newScroll += halfWidth;
+          }
+        }
+        container.scrollLeft = newScroll;
+      }
+      animationFrameId = requestAnimationFrame(step);
+    };
+
+    animationFrameId = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(animationFrameId);
+  }, [direction, trackItems]);
+
   if (trackItems.length === 0) return null;
 
-  const animationClass = direction === 'left' ? 'animate-marquee-left' : 'animate-marquee-right';
-  const duration = `${trackItems.length * 1.5}s`;
+  const handleTouchStart = () => {
+    setIsUserInteracting(true);
+  };
+
+  const handleTouchEnd = () => {
+    setTimeout(() => setIsUserInteracting(false), 1500);
+  };
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    setIsUserInteracting(true);
+    setIsDragging(true);
+    setStartX(e.pageX - (containerRef.current?.offsetLeft || 0));
+    setScrollLeftState(containerRef.current?.scrollLeft || 0);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging || !containerRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - containerRef.current.offsetLeft;
+    const walk = (x - startX) * 1.5;
+    containerRef.current.scrollLeft = scrollLeftState - walk;
+  };
+
+  const handleMouseUpOrLeave = () => {
+    if (isDragging) {
+      setIsDragging(false);
+      setTimeout(() => setIsUserInteracting(false), 1500);
+    }
+  };
+
+  const handleScroll = () => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const halfWidth = container.scrollWidth / 2;
+    if (container.scrollLeft >= halfWidth) {
+      container.scrollLeft -= halfWidth;
+    } else if (container.scrollLeft <= 0) {
+      container.scrollLeft += halfWidth;
+    }
+  };
 
   return (
     <div 
-      className="w-full overflow-hidden py-3 relative select-none flex justify-start items-center group" 
+      ref={containerRef}
+      className="w-full overflow-x-auto scrollbar-none py-3 relative select-none flex justify-start items-center group cursor-grab active:cursor-grabbing touch-pan-x" 
       dir="ltr"
       style={{ direction: 'ltr', justifyContent: 'flex-start' }}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      onMouseDown={handleMouseDown}
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUpOrLeave}
+      onMouseLeave={handleMouseUpOrLeave}
+      onScroll={handleScroll}
     >
       {/* Side gradient overlays to create a fading cinema tape look */}
       <div className="absolute top-0 bottom-0 left-0 w-8 sm:w-16 bg-gradient-to-r from-[#070b11] to-transparent z-10 pointer-events-none" />
       <div className="absolute top-0 bottom-0 right-0 w-8 sm:w-16 bg-gradient-to-l from-[#070b11] to-transparent z-10 pointer-events-none" />
 
       {/* Track 1 */}
-      <div
-        className={`flex gap-4 min-w-max pr-4 group-hover:[animation-play-state:paused] ${animationClass}`}
-        style={{
-          '--marquee-duration': duration,
-        } as React.CSSProperties}
-      >
+      <div className="flex gap-4 min-w-max pr-4">
         {trackItems.map((product, index) => (
           <div key={`${product.id}-t1-${index}`} className="w-52 sm:w-64 flex-shrink-0" dir="rtl">
             <ProductCard
@@ -180,14 +274,8 @@ const AutoScrollRow: React.FC<{
         ))}
       </div>
 
-      {/* Track 2 (Identical duplicate for seamless circular looping) */}
-      <div
-        className={`flex gap-4 min-w-max pr-4 group-hover:[animation-play-state:paused] ${animationClass}`}
-        style={{
-          '--marquee-duration': duration,
-        } as React.CSSProperties}
-        aria-hidden="true"
-      >
+      {/* Track 2 */}
+      <div className="flex gap-4 min-w-max pr-4" aria-hidden="true">
         {trackItems.map((product, index) => (
           <div key={`${product.id}-t2-${index}`} className="w-52 sm:w-64 flex-shrink-0" dir="rtl">
             <ProductCard

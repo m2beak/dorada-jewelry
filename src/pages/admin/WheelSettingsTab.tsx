@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { Plus, Trash2, RefreshCw, AlertTriangle, Check, Gift, Percent } from 'lucide-react';
+import { Plus, Trash2, RefreshCw, AlertTriangle, Check, Gift, Percent, Image } from 'lucide-react';
 import { useWheelSettings, wheelKeys } from '@/hooks/useWheelSettings';
 import { updateWheelSettings } from '@/services/database';
 import { useApp } from '@/contexts/AppContext';
@@ -15,6 +15,7 @@ export const WheelSettingsTab: React.FC = () => {
   const [enabled, setEnabled] = useState(false);
   const [prizes, setPrizes] = useState<Prize[]>([]);
   const [isSaving, setIsSaving] = useState(false);
+  const [uploadingPrizeId, setUploadingPrizeId] = useState<string | null>(null);
 
   // Sync state with queried settings data
   useEffect(() => {
@@ -69,6 +70,25 @@ export const WheelSettingsTab: React.FC = () => {
         return p;
       })
     );
+  };
+
+  const handleImageUpload = async (prizeId: string, file: File) => {
+    setUploadingPrizeId(prizeId);
+    try {
+      const { uploadImageToStorage } = await import('@/services/uploadImage');
+      const publicUrl = await uploadImageToStorage(file, 'jewelry-assets');
+      handlePrizeChange(prizeId, 'imageUrl', publicUrl);
+      showToast('تم رفع صورة الهدية بنجاح', 'success');
+    } catch (error: any) {
+      console.error(error);
+      showToast(error.message || 'فشل رفع الصورة', 'error');
+    } finally {
+      setUploadingPrizeId(null);
+    }
+  };
+
+  const handleRemoveImage = (prizeId: string) => {
+    handlePrizeChange(prizeId, 'imageUrl', '');
   };
 
   const handleSave = async () => {
@@ -186,6 +206,44 @@ export const WheelSettingsTab: React.FC = () => {
                 <span className="w-6 h-6 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-xs text-dorada-cream/40 font-mono">
                   {idx + 1}
                 </span>
+              </div>
+
+              {/* Image Preview & Uploader */}
+              <div className="flex-shrink-0">
+                <div className="relative w-16 h-16 rounded-xl bg-[#0a0f18] border border-white/5 overflow-hidden flex items-center justify-center group/img">
+                  {prize.imageUrl ? (
+                    <>
+                      <img 
+                        src={prize.imageUrl} 
+                        alt={prize.nameAr} 
+                        className="w-full h-full object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveImage(prize.id)}
+                        className="absolute inset-0 bg-black/80 flex items-center justify-center opacity-0 group-hover/img:opacity-100 transition-opacity text-red-400 text-xs font-semibold"
+                      >
+                        إزالة
+                      </button>
+                    </>
+                  ) : uploadingPrizeId === prize.id ? (
+                    <RefreshCw className="w-5 h-5 text-dorada-gold animate-spin" />
+                  ) : (
+                    <label className="cursor-pointer flex flex-col items-center justify-center w-full h-full text-dorada-cream/35 hover:text-dorada-gold transition-colors">
+                      <Image className="w-5 h-5" />
+                      <span className="text-[9px] mt-0.5 font-medium">صورة</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) handleImageUpload(prize.id, file);
+                        }}
+                      />
+                    </label>
+                  )}
+                </div>
               </div>
 
               {/* Title Arabic */}

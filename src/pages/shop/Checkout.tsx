@@ -39,7 +39,7 @@ const Checkout: React.FC = () => {
   const [winningPrize, setWinningPrize] = useState<Prize | null>(null);
 
   // Redirect if cart is empty
-  if (cart.items.length === 0 && !orderSuccess) {
+  if (cart.items.length === 0 && !orderSuccess && !showBoxOpener) {
     return (
       <div className="min-h-screen bg-[#070b11] text-dorada-cream" dir="rtl">
         <nav className="fixed top-0 left-0 right-0 z-50 bg-[#070b11] border-b border-white/10 py-4 shadow-md">
@@ -203,9 +203,16 @@ const Checkout: React.FC = () => {
               رقم الطلب: <span className="font-mono text-dorada-gold">#{orderId}</span>
             </p>
             {winningPrize && (
-              <div className="my-6 p-4 rounded-xl bg-dorada-gold/10 border border-dorada-gold/25 max-w-xs mx-auto">
-                <span className="text-xs text-dorada-cream/50 block mb-1">الهدية المرفقة مع الطلب:</span>
-                <span className="text-dorada-gold font-bold text-lg">{winningPrize.nameAr}</span>
+              <div className="my-6 p-4 rounded-xl bg-dorada-gold/10 border border-dorada-gold/25 max-w-xs mx-auto flex flex-col items-center gap-3">
+                {winningPrize.imageUrl && (
+                  <div className="w-20 h-20 rounded-xl overflow-hidden border border-dorada-gold/20 flex-shrink-0 bg-[#070b11]">
+                    <img src={winningPrize.imageUrl} alt={winningPrize.nameAr} className="w-full h-full object-cover" />
+                  </div>
+                )}
+                <div className="text-center">
+                  <span className="text-xs text-dorada-cream/50 block mb-1">الهدية المرفقة مع الطلب:</span>
+                  <span className="text-dorada-gold font-bold text-lg">{winningPrize.nameAr}</span>
+                </div>
               </div>
             )}
             <p className="text-dorada-cream/60 mb-8">
