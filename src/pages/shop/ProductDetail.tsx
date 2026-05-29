@@ -517,7 +517,7 @@ const ProductDetail: React.FC = () => {
                 <MapPin className="w-6 h-6 text-dorada-gold" />
               </div>
               <h3 className="font-serif text-base font-semibold text-dorada-cream mb-1.5">الموقع</h3>
-              <p className="text-dorada-cream/65 text-xs">قريباً في بغداد</p>
+              <p className="text-dorada-cream/65 text-xs">قريباً</p>
             </div>
           </div>
         </div>
