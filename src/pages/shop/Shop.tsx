@@ -112,7 +112,6 @@ const shuffleArray = <T,>(array: T[]): T[] => {
   return arr;
 };
 
-// Autoplay Horizontal Product Scroll Component (Optimized for mobile touch events & infinite circular loop)
 // Autoplay Horizontal Product Scroll Component (Smooth hardware-accelerated CSS Marquee)
 const AutoScrollRow: React.FC<{
   products: Product[];
@@ -132,34 +131,63 @@ const AutoScrollRow: React.FC<{
     return shuffled.slice(0, 15);
   }, [products]);
 
-  // Repeat and duplicate items for marquee so we have enough elements to loop seamlessly
-  const marqueeItems = React.useMemo(() => {
+  // Repeat items for a single track until we have at least 15 items to cover standard viewport widths
+  const trackItems = React.useMemo(() => {
     if (shuffledProducts.length === 0) return [];
     let base = [...shuffledProducts];
     while (base.length < 15) {
       base = [...base, ...shuffledProducts];
     }
-    return [...base, ...base];
+    return base;
   }, [shuffledProducts]);
 
-  if (marqueeItems.length === 0) return null;
+  if (trackItems.length === 0) return null;
 
   const animationClass = direction === 'left' ? 'animate-marquee-left' : 'animate-marquee-right';
+  const duration = `${trackItems.length * 1.5}s`;
 
   return (
-    <div className="w-full overflow-hidden py-3 relative select-none">
+    <div 
+      className="w-full overflow-hidden py-3 relative select-none flex justify-start items-center" 
+      dir="ltr"
+      style={{ direction: 'ltr', justifyContent: 'flex-start' }}
+    >
       {/* Side gradient overlays to create a fading cinema tape look */}
       <div className="absolute top-0 bottom-0 left-0 w-8 sm:w-16 bg-gradient-to-r from-[#070b11] to-transparent z-10 pointer-events-none" />
       <div className="absolute top-0 bottom-0 right-0 w-8 sm:w-16 bg-gradient-to-l from-[#070b11] to-transparent z-10 pointer-events-none" />
 
+      {/* Track 1 */}
       <div
-        className={`flex gap-4 min-w-max hover:[animation-play-state:paused] ${animationClass}`}
+        className={`flex gap-4 min-w-max pr-4 hover:[animation-play-state:paused] ${animationClass}`}
         style={{
-          '--marquee-duration': `${marqueeItems.length * 2.8}s`,
+          '--marquee-duration': duration,
         } as React.CSSProperties}
       >
-        {marqueeItems.map((product, index) => (
-          <div key={`${product.id}-${index}`} className="w-52 sm:w-64 flex-shrink-0">
+        {trackItems.map((product, index) => (
+          <div key={`${product.id}-t1-${index}`} className="w-52 sm:w-64 flex-shrink-0" dir="rtl">
+            <ProductCard
+              product={product}
+              onAddToCart={onAddToCart}
+              onAddToWishlist={onAddToWishlist}
+              onQuickView={onQuickView}
+              isInWishlist={isInWishlist(product.id)}
+              onClick={() => onProductClick(product)}
+              formatPrice={formatPrice}
+            />
+          </div>
+        ))}
+      </div>
+
+      {/* Track 2 (Identical duplicate for seamless circular looping) */}
+      <div
+        className={`flex gap-4 min-w-max pr-4 hover:[animation-play-state:paused] ${animationClass}`}
+        style={{
+          '--marquee-duration': duration,
+        } as React.CSSProperties}
+        aria-hidden="true"
+      >
+        {trackItems.map((product, index) => (
+          <div key={`${product.id}-t2-${index}`} className="w-52 sm:w-64 flex-shrink-0" dir="rtl">
             <ProductCard
               product={product}
               onAddToCart={onAddToCart}
