@@ -22,9 +22,9 @@ const Wishlist: React.FC = () => {
 
   if (wishlist.items.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-dorada-blue via-[#1a2a3d] to-[#0d1a26]" dir="rtl">
+      <div className="min-h-screen bg-[#070b11] text-dorada-cream" dir="rtl">
         {/* Navbar */}
-        <nav className="fixed top-0 left-0 right-0 z-50 nav-glass py-4">
+        <nav className="fixed top-0 left-0 right-0 z-50 bg-[#070b11] border-b border-white/10 py-4 shadow-md">
           <div className="w-full px-4 lg:px-8 relative">
             <div className="flex items-center justify-between h-12">
               <button
@@ -46,7 +46,7 @@ const Wishlist: React.FC = () => {
               <div className="flex items-center justify-end z-10 w-24">
                 <button
                   onClick={() => navigate('/cart')}
-                  className="relative p-2.5 rounded-full bg-white/5 hover:bg-dorada-gold/20 text-dorada-cream hover:text-dorada-gold transition-all"
+                  className="relative p-2.5 rounded-full bg-[#121c2c] border border-white/5 hover:bg-dorada-gold/20 text-dorada-cream hover:text-dorada-gold transition-all"
                 >
                   <ShoppingBag className="w-5 h-5" />
                   {cartItemsCount > 0 && (
@@ -63,7 +63,7 @@ const Wishlist: React.FC = () => {
         {/* Empty Wishlist */}
         <main className="pt-24 pb-20 px-4 lg:px-8 min-h-screen flex items-center justify-center">
           <div className="text-center">
-            <div className="w-24 h-24 rounded-full glass-card flex items-center justify-center mx-auto mb-6">
+            <div className="w-24 h-24 rounded-full bg-[#121c2c] border border-white/10 flex items-center justify-center mx-auto mb-6">
               <Heart className="w-12 h-12 text-dorada-cream/30" />
             </div>
             <h2 className="font-serif text-2xl font-bold text-dorada-cream mb-2">
@@ -86,9 +86,9 @@ const Wishlist: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-dorada-blue via-[#1a2a3d] to-[#0d1a26]" dir="rtl">
+    <div className="min-h-screen bg-[#070b11] text-dorada-cream" dir="rtl">
       {/* Navbar */}
-      <nav className="fixed top-0 left-0 right-0 z-50 nav-glass py-4">
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-[#070b11] border-b border-white/10 py-4 shadow-md">
         <div className="w-full px-4 lg:px-8 relative">
           <div className="flex items-center justify-between h-12">
             <button
@@ -110,7 +110,7 @@ const Wishlist: React.FC = () => {
             <div className="flex items-center justify-end z-10 w-24">
               <button
                 onClick={() => navigate('/cart')}
-                className="relative p-2.5 rounded-full bg-white/5 hover:bg-dorada-gold/20 text-dorada-cream hover:text-dorada-gold transition-all"
+                className="relative p-2.5 rounded-full bg-[#121c2c] border border-white/5 hover:bg-dorada-gold/20 text-dorada-cream hover:text-dorada-gold transition-all"
               >
                 <ShoppingBag className="w-5 h-5" />
                 {cartItemsCount > 0 && (
@@ -133,7 +133,7 @@ const Wishlist: React.FC = () => {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {wishlist.items.map((item) => (
-              <div key={item.product.id} className="glass-card overflow-hidden group">
+              <div key={item.product.id} className="bg-[#121c2c] border border-white/10 rounded-2xl overflow-hidden group flex flex-col h-full">
                 <div className="relative aspect-square overflow-hidden">
                   <img
                     src={item.product.images[0]}

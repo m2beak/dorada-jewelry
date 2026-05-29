@@ -129,3 +129,13 @@ export interface Toast {
   type: 'success' | 'error' | 'info';
   duration?: number;
 }
+
+// Review Type
+export interface Review {
+  id: string;
+  name: string;
+  rating: number;
+  comment: string;
+  productId?: string;
+  createdAt: string;
+}

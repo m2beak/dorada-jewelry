@@ -1,4 +1,4 @@
-import { type Product, type Category, type User, type Cart, type Order, type TelegramConfig, type Wishlist } from '@/types';
+import { type Product, type Category, type User, type Cart, type Order, type TelegramConfig, type Wishlist, type Review } from '@/types';
 import { supabase } from '@/lib/supabase';
 
 // Keys for LocalStorage
@@ -582,6 +582,110 @@ export const updateBackground = async (sectionKey: string, imageUrl: string): Pr
   } catch (error: any) {
     console.error(`Error updating background for ${sectionKey}:`, error);
     return { success: false, error: error.message || 'فشل تحديث الخلفية' };
+  }
+};
+
+// --- Review Operations (Supabase) ---
+export const getReviews = async (productId?: string): Promise<Review[]> => {
+  try {
+    let query = supabase
+      .from('reviews')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (productId) {
+      query = query.eq('product_id', productId);
+    } else {
+      query = query.is('product_id', null);
+    }
+
+    const { data, error } = await query;
+    if (error) {
+      console.warn('Reviews table query failed or not found:', error.message);
+      return [];
+    }
+
+    return (data || []).map(r => ({
+      id: r.id,
+      name: r.name,
+      rating: r.rating,
+      comment: r.comment,
+      productId: r.product_id,
+      createdAt: r.created_at
+    }));
+  } catch (error) {
+    console.error('Error fetching reviews:', error);
+    return [];
+  }
+};
+
+export const getAllReviews = async (): Promise<Review[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('reviews')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    return (data || []).map(r => ({
+      id: r.id,
+      name: r.name,
+      rating: r.rating,
+      comment: r.comment,
+      productId: r.product_id,
+      createdAt: r.created_at
+    }));
+  } catch (error) {
+    console.error('Error fetching all reviews:', error);
+    return [];
+  }
+};
+
+export const addReview = async (review: Omit<Review, 'id' | 'createdAt'>): Promise<{ success: boolean; error?: string; data?: Review }> => {
+  try {
+    const { data, error } = await supabase
+      .from('reviews')
+      .insert({
+        name: review.name,
+        rating: review.rating,
+        comment: review.comment,
+        product_id: review.productId || null
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    return {
+      success: true,
+      data: {
+        id: data.id,
+        name: data.name,
+        rating: data.rating,
+        comment: data.comment,
+        productId: data.product_id,
+        createdAt: data.created_at
+      }
+    };
+  } catch (error: any) {
+    console.error('Error adding review:', error);
+    return { success: false, error: error.message || 'فشل إضافة التقييم' };
+  }
+};
+
+export const deleteReview = async (id: string): Promise<{ success: boolean; error?: string }> => {
+  try {
+    const { error } = await supabase
+      .from('reviews')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error deleting review:', error);
+    return { success: false, error: error.message || 'فشل حذف التقييم' };
   }
 };
 

@@ -132,19 +132,37 @@ export const BackgroundsTab: React.FC = () => {
     );
   }
 
+  const [showWarning, setShowWarning] = useState(() => {
+    return localStorage.getItem('dorada_dismiss_bg_warning') !== 'true';
+  });
+
   return (
     <div className="space-y-8">
-      <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 flex gap-3 text-amber-400">
-        <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" />
-        <div className="text-sm">
-          <p className="font-semibold mb-1">ملاحظة هامة لقاعدة البيانات:</p>
-          <p className="text-amber-400/80 leading-relaxed">
-            يجب إنشاء جدول <code className="bg-black/20 px-1.5 py-0.5 rounded font-mono text-xs">backgrounds</code> وإنشاء مخزن ملفات باسم 
-            <code className="bg-black/20 px-1.5 py-0.5 rounded font-mono text-xs">jewelry-assets</code> في لوحة تحكم Supabase الخاصة بك لتعمل هذه الخاصية بشكل صحيح.
-            إذا لم يكن الجدول منشأً بعد، فسيستمر المتجر في العمل بشكل طبيعي مستخدماً الخلفيات الافتراضية الأنيقة.
-          </p>
+      {showWarning && (
+        <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 flex justify-between gap-3 text-amber-400">
+          <div className="flex gap-3">
+            <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+            <div className="text-sm">
+              <p className="font-semibold mb-1">ملاحظة هامة لقاعدة البيانات:</p>
+              <p className="text-amber-400/80 leading-relaxed">
+                يجب إنشاء جدول <code className="bg-black/20 px-1.5 py-0.5 rounded font-mono text-xs">backgrounds</code> وإنشاء مخزن ملفات باسم 
+                <code className="bg-black/20 px-1.5 py-0.5 rounded font-mono text-xs">jewelry-assets</code> في لوحة تحكم Supabase الخاصة بك لتعمل هذه الخاصية بشكل صحيح.
+                إذا لم يكن الجدول منشأً بعد، فسيستمر المتجر في العمل بشكل طبيعي مستخدماً الخلفيات الافتراضية الأنيقة.
+              </p>
+            </div>
+          </div>
+          <button 
+            type="button"
+            onClick={() => {
+              localStorage.setItem('dorada_dismiss_bg_warning', 'true');
+              setShowWarning(false);
+            }}
+            className="text-amber-400 hover:text-amber-300 font-bold self-start text-xs p-1"
+          >
+            إخفاء
+          </button>
         </div>
-      </div>
+      )}
 
       <div className="grid grid-cols-1 gap-8">
         {SECTIONS.map((section) => {

@@ -11,6 +11,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
+import { ProductReviewsSummary } from '@/components/ProductReviewsSummary';
 
 const Checkout: React.FC = () => {
   const navigate = useNavigate();
@@ -34,8 +35,8 @@ const Checkout: React.FC = () => {
   // Redirect if cart is empty
   if (cart.items.length === 0 && !orderSuccess) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-dorada-blue via-[#1a2a3d] to-[#0d1a26]" dir="rtl">
-        <nav className="fixed top-0 left-0 right-0 z-50 nav-glass py-4">
+      <div className="min-h-screen bg-[#070b11] text-dorada-cream" dir="rtl">
+        <nav className="fixed top-0 left-0 right-0 z-50 bg-[#070b11] border-b border-white/10 py-4 shadow-md">
           <div className="w-full px-4 lg:px-8 relative h-12 flex items-center justify-between">
             <button onClick={() => navigate('/')} className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-2">
               <img src="/doradaicon.svg" alt="دورادا" className="w-8 h-8 text-dorada-gold object-contain" />
@@ -45,7 +46,7 @@ const Checkout: React.FC = () => {
         </nav>
         <main className="pt-24 pb-20 px-4 lg:px-8 min-h-screen flex items-center justify-center">
           <div className="text-center">
-            <div className="w-24 h-24 rounded-full glass-card flex items-center justify-center mx-auto mb-6">
+            <div className="w-24 h-24 rounded-full bg-[#121c2c] border border-white/10 flex items-center justify-center mx-auto mb-6">
               <AlertCircle className="w-12 h-12 text-dorada-cream/30" />
             </div>
             <h2 className="font-serif text-2xl font-bold text-dorada-cream mb-2">
@@ -143,8 +144,8 @@ const Checkout: React.FC = () => {
   // Success Screen
   if (orderSuccess) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-dorada-blue via-[#1a2a3d] to-[#0d1a26]" dir="rtl">
-        <nav className="fixed top-0 left-0 right-0 z-50 nav-glass py-4">
+      <div className="min-h-screen bg-[#070b11] text-dorada-cream" dir="rtl">
+        <nav className="fixed top-0 left-0 right-0 z-50 bg-[#070b11] border-b border-white/10 py-4 shadow-md">
           <div className="w-full px-4 lg:px-8 relative h-12 flex items-center justify-between">
             <button onClick={() => navigate('/')} className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-2">
               <img src="/doradaicon.svg" alt="دورادا" className="w-8 h-8 text-dorada-gold object-contain" />
@@ -188,9 +189,9 @@ const Checkout: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-dorada-blue via-[#1a2a3d] to-[#0d1a26]" dir="rtl">
+    <div className="min-h-screen bg-[#070b11] text-dorada-cream" dir="rtl">
       {/* Navbar */}
-      <nav className="fixed top-0 left-0 right-0 z-50 nav-glass py-4">
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-[#070b11] border-b border-white/10 py-4 shadow-md">
         <div className="w-full px-4 lg:px-8 relative">
           <div className="flex items-center justify-between h-12">
             <button
@@ -357,31 +358,35 @@ const Checkout: React.FC = () => {
 
             {/* Order Summary */}
             <div className="lg:col-span-2">
-              <div className="glass-card p-6 sticky top-24">
+              <div className="bg-[#121c2c] border border-white/10 p-6 rounded-2xl sticky top-24">
                 <h2 className="font-serif text-xl font-bold text-dorada-cream mb-6">
                   ملخص الطلب
                 </h2>
 
                 {/* Items */}
-                <div className="space-y-3 mb-6 max-h-64 overflow-y-auto">
+                <div className="space-y-4 mb-6 max-h-[50vh] overflow-y-auto pr-1">
                   {cart.items.map((item) => (
-                    <div key={item.product.id} className="flex gap-3">
-                      <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
-                        <img
-                          src={item.product.images[0]}
-                          alt={item.product.nameAr}
-                          className="w-full h-full object-cover"
-                        />
+                    <div key={item.product.id} className="border-b border-white/5 pb-4 last:border-0 last:pb-0">
+                      <div className="flex gap-3">
+                        <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
+                          <img
+                            src={item.product.images[0]}
+                            alt={item.product.nameAr}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="text-sm text-dorada-cream truncate">{item.product.nameAr}</h4>
+                          <p className="text-xs text-dorada-cream/50 mt-0.5">
+                            {formatPrice(item.product.price)} × {item.quantity}
+                          </p>
+                        </div>
+                        <div className="text-sm gold-text font-bold font-mono">
+                          {formatPrice(item.product.price * item.quantity)}
+                        </div>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <h4 className="text-sm text-dorada-cream truncate">{item.product.nameAr}</h4>
-                        <p className="text-xs text-dorada-cream/50">
-                          {formatPrice(item.product.price)} × {item.quantity}
-                        </p>
-                      </div>
-                      <div className="text-sm gold-text">
-                        {formatPrice(item.product.price * item.quantity)}
-                      </div>
+                      {/* Product reviews summary shown right inside checkout item */}
+                      <ProductReviewsSummary productId={item.product.id} />
                     </div>
                   ))}
                 </div>
@@ -404,7 +409,7 @@ const Checkout: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="mt-6 p-4 rounded-xl bg-dorada-gold/5 border border-dorada-gold/20">
+                <div className="mt-6 p-4 rounded-xl bg-[#070b11] border border-white/5">
                   <p className="text-sm text-dorada-cream/60 text-center">
                     الدفع عند الاستلام
                   </p>

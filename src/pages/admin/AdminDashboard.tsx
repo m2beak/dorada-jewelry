@@ -29,6 +29,7 @@ import {
   Shield,
   ChevronDown,
   ChevronUp,
+  Star,
 } from 'lucide-react';
 import {
   addProduct,
@@ -45,6 +46,7 @@ import {
   validateImageFile,
 } from '@/services/database';
 import { BackgroundsTab } from './BackgroundsTab';
+import { useAllReviews, useDeleteReviewMutation } from '@/hooks/useReviews';
 import { revokeAdminAccess } from '@/services/security';
 import { testTelegramConnection, getBotInfo } from '@/services/telegram';
 import { useApp } from '@/contexts/AppContext';
@@ -59,7 +61,7 @@ import { orderKeys } from '@/hooks/useOrders';
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { setAdmin, refreshProducts, showToast } = useApp();
-  const [activeTab, setActiveTab] = useState<'products' | 'orders' | 'categories' | 'settings' | 'backgrounds'>('products');
+  const [activeTab, setActiveTab] = useState<'products' | 'orders' | 'categories' | 'settings' | 'backgrounds' | 'reviews'>('products');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const queryClient = useQueryClient();
 
@@ -77,6 +79,22 @@ const AdminDashboard: React.FC = () => {
   const { data: categories = [] } = useCategories();
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+
+  // Reviews State
+  const { data: dbReviews = [], refetch: refetchAllReviews } = useAllReviews();
+  const deleteReviewMutation = useDeleteReviewMutation();
+
+  const handleDeleteReview = async (reviewId: string) => {
+    if (confirm('هل أنت متأكد من رغبتك في حذف هذا التقييم؟')) {
+      const result = await deleteReviewMutation.mutateAsync(reviewId);
+      if (result.success) {
+        refetchAllReviews();
+        showToast('تم حذف التقييم بنجاح', 'success');
+      } else {
+        showToast(result.error || 'فشل حذف التقييم', 'error');
+      }
+    }
+  };
 
   // Telegram Config State
   const [telegramConfig, setTelegramConfig] = useState({ botToken: '', chatId: '', enabled: false });
@@ -227,11 +245,13 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
-  const filteredProducts = products.filter(p =>
-    p.nameAr.toLowerCase().includes(productSearch.toLowerCase()) ||
-    p.name.toLowerCase().includes(productSearch.toLowerCase()) ||
-    p.sku.toLowerCase().includes(productSearch.toLowerCase())
-  );
+  const filteredProducts = React.useMemo(() => {
+    return products.filter(p =>
+      p.nameAr.toLowerCase().includes(productSearch.toLowerCase()) ||
+      p.name.toLowerCase().includes(productSearch.toLowerCase()) ||
+      p.sku.toLowerCase().includes(productSearch.toLowerCase())
+    );
+  }, [products, productSearch]);
 
   const getStatusColor = (status: Order['status']) => {
     switch (status) {
@@ -250,13 +270,22 @@ const AdminDashboard: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-dorada-blue via-[#1a2a3d] to-[#0d1a26]" dir="rtl">
+    <div className="min-h-screen bg-[#070b11] text-dorada-cream" dir="rtl">
+      {/* Sidebar Backdrop Overlay on Mobile */}
+      {isSidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/70 z-30 md:hidden"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
       <aside
-        className={`fixed top-0 right-0 h-full z-40 transition-all duration-300 ${isSidebarOpen ? 'w-64' : 'w-0 overflow-hidden'
-          }`}
+        className={`fixed top-0 right-0 h-full z-40 transition-all duration-300 md:w-64 ${
+          isSidebarOpen ? 'w-64 translate-x-0' : 'w-64 translate-x-full md:translate-x-0 md:w-0 overflow-hidden'
+        }`}
       >
-        <div className="h-full glass-card border-l border-white/10 rounded-none">
+        <div className="h-full bg-[#121c2c] border-l border-white/10 rounded-none">
           {/* Logo */}
           <div className="p-6 border-b border-white/10">
             <div className="flex items-center gap-3">
@@ -277,11 +306,17 @@ const AdminDashboard: React.FC = () => {
               { id: 'orders', label: 'الطلبات', icon: ShoppingCart },
               { id: 'categories', label: 'التصنيفات', icon: LayoutDashboard },
               { id: 'backgrounds', label: 'الخلفيات والبنرات', icon: ImageIcon },
+              { id: 'reviews', label: 'التقييمات والآراء', icon: Star },
               { id: 'settings', label: 'الإعدادات', icon: Settings },
             ].map((item) => (
               <button
                 key={item.id}
-                onClick={() => setActiveTab(item.id as any)}
+                onClick={() => {
+                  setActiveTab(item.id as any);
+                  if (window.innerWidth < 768) {
+                    setIsSidebarOpen(false);
+                  }
+                }}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === item.id
                   ? 'bg-dorada-gold/20 text-dorada-gold border border-dorada-gold/30'
                   : 'text-dorada-cream/60 hover:bg-white/5 hover:text-dorada-cream'
@@ -307,7 +342,7 @@ const AdminDashboard: React.FC = () => {
       </aside>
 
       {/* Main Content */}
-      <main className={`transition-all duration-300 ${isSidebarOpen ? 'mr-64' : 'mr-0'}`}>
+      <main className={`transition-all duration-300 ${isSidebarOpen ? 'mr-0 md:mr-64' : 'mr-0'}`}>
         {/* Header */}
         <header className="sticky top-0 z-30 glass-card border-b border-white/10 rounded-none px-6 py-4">
           <div className="flex items-center justify-between">
@@ -328,6 +363,7 @@ const AdminDashboard: React.FC = () => {
                 {activeTab === 'categories' && 'إدارة التصنيفات'}
                 {activeTab === 'settings' && 'الإعدادات'}
                 {activeTab === 'backgrounds' && 'الخلفيات والبنرات'}
+                {activeTab === 'reviews' && 'إدارة التقييمات والآراء'}
               </h1>
             </div>
           </div>
@@ -646,6 +682,76 @@ const AdminDashboard: React.FC = () => {
           {/* Backgrounds Tab */}
           {activeTab === 'backgrounds' && (
             <BackgroundsTab />
+          )}
+
+          {/* Reviews Tab */}
+          {activeTab === 'reviews' && (
+            <div className="space-y-6">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-3">
+                <div>
+                  <h3 className="font-serif text-lg font-bold text-dorada-cream">التحكم بالتقييمات وآراء العملاء</h3>
+                  <p className="text-xs text-dorada-cream/50 mt-1">تعديل وحذف المراجعات والآراء العامة والخاصة بالمنتجات.</p>
+                </div>
+                <span className="text-xs px-3 py-1 rounded-full bg-[#121c2c] border border-white/10 text-dorada-gold">
+                  إجمالي التقييمات: {dbReviews.length}
+                </span>
+              </div>
+
+              {dbReviews.length === 0 ? (
+                <div className="text-center py-20 bg-[#121c2c] border border-white/10 rounded-2xl">
+                  <Star className="w-12 h-12 text-dorada-cream/15 mx-auto mb-4" />
+                  <p className="text-sm text-dorada-cream/50">لا توجد تقييمات مسجلة بعد</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {dbReviews.map((review) => {
+                    const product = products.find(p => p.id === review.productId);
+                    return (
+                      <div key={review.id} className="bg-[#121c2c] border border-white/10 p-5 rounded-2xl flex flex-col justify-between">
+                        <div>
+                          <div className="flex justify-between items-start mb-2 gap-2">
+                            <div>
+                              <h4 className="font-semibold text-dorada-cream text-sm sm:text-base">{review.name}</h4>
+                              {review.productId ? (
+                                <span className="inline-block mt-1 text-[10px] text-dorada-gold px-2 py-0.5 rounded-md bg-[#1e293b] border border-dorada-gold/20 max-w-[200px] truncate">
+                                  تقييم لمنتج: {product ? product.nameAr : 'منتج غير موجود'}
+                                </span>
+                              ) : (
+                                <span className="inline-block mt-1 text-[10px] text-green-400 px-2 py-0.5 rounded-md bg-[#1e293b] border border-green-500/20">
+                                  تقييم عام للمتجر
+                                </span>
+                              )}
+                            </div>
+                            <span className="text-[10px] text-dorada-cream/40 font-mono">
+                              {new Date(review.createdAt).toLocaleDateString('ar-EG')}
+                            </span>
+                          </div>
+                          
+                          <div className="flex text-dorada-gold mb-3">
+                            {[...Array(5)].map((_, i) => (
+                              <Star key={i} className={`w-3.5 h-3.5 ${i < review.rating ? 'fill-current' : 'text-dorada-cream/20'}`} />
+                            ))}
+                          </div>
+
+                          <p className="text-xs sm:text-sm text-dorada-cream/70 leading-relaxed mb-4">
+                            {review.comment}
+                          </p>
+                        </div>
+
+                        <div className="flex justify-end pt-2 border-t border-white/5">
+                          <button
+                            onClick={() => handleDeleteReview(review.id)}
+                            className="px-4 py-2 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white transition-all text-xs font-semibold"
+                          >
+                            حذف التقييم
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           )}
         </div>
       </main>

@@ -11,6 +11,7 @@ import {
   Heart
 } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
+import { ProductReviewsSummary } from '@/components/ProductReviewsSummary';
 
 const Cart: React.FC = () => {
   const navigate = useNavigate();
@@ -18,9 +19,9 @@ const Cart: React.FC = () => {
 
   if (cart.items.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-dorada-blue via-[#1a2a3d] to-[#0d1a26]" dir="rtl">
+      <div className="min-h-screen bg-[#070b11] text-dorada-cream" dir="rtl">
         {/* Navbar */}
-        <nav className="fixed top-0 left-0 right-0 z-50 nav-glass py-4">
+        <nav className="fixed top-0 left-0 right-0 z-50 bg-[#070b11] border-b border-white/10 py-4 shadow-md">
           <div className="w-full px-4 lg:px-8 relative">
             <div className="flex items-center justify-between h-12">
               <button
@@ -42,7 +43,7 @@ const Cart: React.FC = () => {
               <div className="flex items-center gap-2 z-10 w-24 justify-end">
                 <button
                   onClick={() => navigate('/wishlist')}
-                  className="relative p-2 rounded-full bg-white/5 hover:bg-dorada-gold/20 text-dorada-cream hover:text-dorada-gold transition-all"
+                  className="relative p-2 rounded-full bg-[#121c2c] border border-white/5 hover:bg-dorada-gold/20 text-dorada-cream hover:text-dorada-gold transition-all"
                 >
                   <Heart className="w-5 h-5" />
                   {wishlistItemsCount > 0 && (
@@ -59,7 +60,7 @@ const Cart: React.FC = () => {
         {/* Empty Cart */}
         <main className="pt-24 pb-20 px-4 lg:px-8 min-h-screen flex items-center justify-center">
           <div className="text-center">
-            <div className="w-24 h-24 rounded-full glass-card flex items-center justify-center mx-auto mb-6">
+            <div className="w-24 h-24 rounded-full bg-[#121c2c] border border-white/10 flex items-center justify-center mx-auto mb-6">
               <ShoppingBag className="w-12 h-12 text-dorada-cream/30" />
             </div>
             <h2 className="font-serif text-2xl font-bold text-dorada-cream mb-2">
@@ -82,9 +83,9 @@ const Cart: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-dorada-blue via-[#1a2a3d] to-[#0d1a26]" dir="rtl">
+    <div className="min-h-screen bg-[#070b11] text-dorada-cream" dir="rtl">
       {/* Navbar */}
-      <nav className="fixed top-0 left-0 right-0 z-50 nav-glass py-4">
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-[#070b11] border-b border-white/10 py-4 shadow-md">
         <div className="w-full px-4 lg:px-8 relative">
           <div className="flex items-center justify-between h-12">
             <button
@@ -106,7 +107,7 @@ const Cart: React.FC = () => {
             <div className="flex items-center justify-end z-10 w-24">
               <button
                 onClick={() => navigate('/wishlist')}
-                className="relative p-2 rounded-full bg-white/5 hover:bg-dorada-gold/20 text-dorada-cream hover:text-dorada-gold transition-all"
+                className="relative p-2 rounded-full bg-[#121c2c] border border-white/5 hover:border-dorada-gold/20 text-dorada-cream hover:text-dorada-gold transition-all"
               >
                 <Heart className="w-5 h-5" />
                 {wishlistItemsCount > 0 && (
@@ -131,7 +132,7 @@ const Cart: React.FC = () => {
             {/* Cart Items */}
             <div className="lg:col-span-2 space-y-4">
               {cart.items.map((item) => (
-                <div key={item.product.id} className="glass-card p-4 flex gap-4">
+                <div key={item.product.id} className="bg-[#121c2c] border border-white/10 p-4 rounded-2xl flex gap-4">
                   <div className="w-24 h-24 rounded-lg overflow-hidden flex-shrink-0">
                     <img
                       src={item.product.images[0]}
@@ -145,19 +146,22 @@ const Cart: React.FC = () => {
                         {item.product.nameAr}
                       </h3>
                       <p className="text-sm text-dorada-cream/50">{item.product.categoryAr}</p>
+                      
+                      {/* Product reviews summary shown right inside cart item */}
+                      <ProductReviewsSummary productId={item.product.id} />
                     </div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2 glass-card px-2 py-1">
+                    <div className="flex items-center justify-between mt-3">
+                      <div className="flex items-center gap-2 bg-black/20 border border-white/5 rounded-xl px-2 py-1">
                         <button
                           onClick={() => updateCartItemQuantity(item.product.id, item.quantity - 1)}
-                          className="p-1.5 rounded hover:bg-white/10 text-dorada-cream transition-colors"
+                          className="p-1.5 rounded hover:bg-white/5 text-dorada-cream transition-colors"
                         >
                           <Minus className="w-4 h-4" />
                         </button>
                         <span className="w-8 text-center font-bold text-dorada-cream">{item.quantity}</span>
                         <button
                           onClick={() => updateCartItemQuantity(item.product.id, item.quantity + 1)}
-                          className="p-1.5 rounded hover:bg-white/10 text-dorada-cream transition-colors"
+                          className="p-1.5 rounded hover:bg-white/5 text-dorada-cream transition-colors"
                           disabled={item.quantity >= item.product.quantity}
                         >
                           <Plus className="w-4 h-4" />
@@ -182,7 +186,7 @@ const Cart: React.FC = () => {
 
             {/* Order Summary */}
             <div className="lg:sticky lg:top-24 h-fit">
-              <div className="glass-card p-6">
+              <div className="bg-[#121c2c] border border-white/10 p-6 rounded-2xl">
                 <h2 className="font-serif text-xl font-bold text-dorada-cream mb-6">
                   ملخص الطلب
                 </h2>
