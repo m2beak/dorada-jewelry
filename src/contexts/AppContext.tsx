@@ -52,7 +52,7 @@ interface AppContextType {
     customerPhone: string;
     customerAddress: string;
     customerCity: string;
-  }) => Promise<{ success: boolean; order?: Order; error?: string }>;
+  }, wonPrize?: string) => Promise<{ success: boolean; order?: Order; error?: string }>;
 
   // Toast
   toasts: Toast[];
@@ -261,7 +261,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     customerPhone: string;
     customerAddress: string;
     customerCity: string;
-  }) => {
+  }, wonPrize?: string) => {
     const currentCart = getCart();
 
     if (currentCart.items.length === 0) {
@@ -284,6 +284,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       total: currentCart.total + 5000,
       status: 'pending',
       statusAr: 'قيد الانتظار',
+      wonPrize,
     });
 
     if (!result.success || !result.order) {

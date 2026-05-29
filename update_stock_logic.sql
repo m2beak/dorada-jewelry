@@ -1,7 +1,11 @@
 -- update_stock_logic.sql
 
+-- 0. Ensure "wonPrize" column exists in "orders" table
+ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "wonPrize" text;
+
 -- 1. DROP old function to ensure clean state
 DROP FUNCTION IF EXISTS secure_create_order;
+DROP FUNCTION IF EXISTS secure_create_order(text, text, text, text, jsonb);
 
 -- 2. Re-create secure_create_order 
 -- Changes: 
@@ -12,7 +16,8 @@ CREATE OR REPLACE FUNCTION secure_create_order(
   p_customer_phone text,
   p_customer_address text,
   p_customer_city text,
-  p_items jsonb
+  p_items jsonb,
+  p_won_prize text DEFAULT NULL
 )
 RETURNS jsonb
 LANGUAGE plpgsql
@@ -100,6 +105,7 @@ BEGIN
     "total",
     "status",
     "statusAr",
+    "wonPrize",
     "createdAt",
     "updatedAt"
   ) VALUES (
@@ -111,6 +117,7 @@ BEGIN
     v_total,
     'pending',
     'قيد الانتظار',
+    p_won_prize,
     now(),
     now()
   )
@@ -134,6 +141,10 @@ BEGIN
                      '-------------------' || E'\n' ||
                      '*المنتجات:*' || v_tg_items_details || E'\n' ||
                      '-------------------';
+
+         IF p_won_prize IS NOT NULL AND p_won_prize <> '' THEN
+           v_tg_msg := v_tg_msg || E'\n' || '🎁 *الهدية المرفقة:* ' || p_won_prize || E'\n' || '-------------------';
+         END IF;
          
          PERFORM net.http_post(
             url := 'https://api.telegram.org/bot' || v_tg_bot_token || '/sendMessage',

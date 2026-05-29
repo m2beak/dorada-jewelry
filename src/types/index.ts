@@ -104,6 +104,7 @@ export interface Order {
   createdAt: string;
   updatedAt: string;
   telegramMessageId?: number;
+  wonPrize?: string;
 }
 
 // Telegram Bot Config
@@ -138,4 +139,17 @@ export interface Review {
   comment: string;
   productId?: string;
   createdAt: string;
+}
+
+// Gift Box / Wheel of Fortune Types
+export interface Prize {
+  id: string;
+  name: string;
+  nameAr: string;
+  chance: number; // percentage (e.g. 10 for 10%)
+}
+
+export interface WheelSettings {
+  enabled: boolean;
+  prizes: Prize[];
 }

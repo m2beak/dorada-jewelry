@@ -12,10 +12,14 @@ import {
 } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
 import { ProductReviewsSummary } from '@/components/ProductReviewsSummary';
+import { useWheelSettings } from '@/hooks/useWheelSettings';
+import { JewelryBoxOpenerModal } from '@/components/JewelryBoxOpenerModal';
+import type { Prize } from '@/types';
 
 const Checkout: React.FC = () => {
   const navigate = useNavigate();
   const { cart, formatPrice, placeOrder } = useApp();
+  const { data: wheelSettings } = useWheelSettings();
 
   const [formData, setFormData] = useState({
     customerName: '',
@@ -31,6 +35,8 @@ const Checkout: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderSuccess, setOrderSuccess] = useState(false);
   const [orderId, setOrderId] = useState('');
+  const [showBoxOpener, setShowBoxOpener] = useState(false);
+  const [winningPrize, setWinningPrize] = useState<Prize | null>(null);
 
   // Redirect if cart is empty
   if (cart.items.length === 0 && !orderSuccess) {
@@ -129,11 +135,42 @@ const Checkout: React.FC = () => {
 
     setIsSubmitting(true);
 
-    const result = await placeOrder(formData);
+    // Check if customer is eligible for a gift box opening (at least one featured product in cart & feature is enabled)
+    const hasFeaturedProduct = cart.items.some(item => item.product.featured === true);
+    const isGameEnabled = wheelSettings && wheelSettings.enabled && wheelSettings.prizes && wheelSettings.prizes.length > 0;
+    
+    let rolledPrize: Prize | undefined = undefined;
+
+    if (hasFeaturedProduct && isGameEnabled) {
+      const activePrizes = wheelSettings.prizes.filter(p => p.chance > 0);
+      if (activePrizes.length > 0) {
+        const totalChance = activePrizes.reduce((sum, p) => sum + p.chance, 0);
+        const random = Math.floor(Math.random() * totalChance) + 1;
+        let cumulativeChance = 0;
+        for (const prize of activePrizes) {
+          cumulativeChance += prize.chance;
+          if (random <= cumulativeChance) {
+            rolledPrize = prize;
+            break;
+          }
+        }
+        if (!rolledPrize) {
+          rolledPrize = activePrizes[0];
+        }
+      }
+    }
+
+    const result = await placeOrder(formData, rolledPrize?.nameAr);
 
     if (result.success && result.order) {
       setOrderId(result.order.id.slice(-6).toUpperCase());
-      setOrderSuccess(true);
+      
+      if (rolledPrize) {
+        setWinningPrize(rolledPrize);
+        setShowBoxOpener(true);
+      } else {
+        setOrderSuccess(true);
+      }
     } else {
       alert(result.error || 'حدث خطأ، يرجى المحاولة مرة أخرى');
     }
@@ -165,6 +202,12 @@ const Checkout: React.FC = () => {
             <p className="text-dorada-cream/60 mb-2">
               رقم الطلب: <span className="font-mono text-dorada-gold">#{orderId}</span>
             </p>
+            {winningPrize && (
+              <div className="my-6 p-4 rounded-xl bg-dorada-gold/10 border border-dorada-gold/25 max-w-xs mx-auto">
+                <span className="text-xs text-dorada-cream/50 block mb-1">الهدية المرفقة مع الطلب:</span>
+                <span className="text-dorada-gold font-bold text-lg">{winningPrize.nameAr}</span>
+              </div>
+            )}
             <p className="text-dorada-cream/60 mb-8">
               سنتواصل معك قريباً لتأكيد الطلب وترتيب التوصيل
             </p>
@@ -419,6 +462,17 @@ const Checkout: React.FC = () => {
           </div>
         </div>
       </main>
+
+      {showBoxOpener && winningPrize && wheelSettings && (
+        <JewelryBoxOpenerModal
+          settings={wheelSettings}
+          predeterminedPrize={winningPrize}
+          onClose={() => {
+            setShowBoxOpener(false);
+            setOrderSuccess(true);
+          }}
+        />
+      )}
     </div>
   );
 };

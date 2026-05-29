@@ -4,12 +4,18 @@
 -- ONE TIME SETUP: Enable HTTP extension
 CREATE EXTENSION IF NOT EXISTS "pg_net";
 
+-- Ensure "wonPrize" column exists in "orders" table
+ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "wonPrize" text;
+
+DROP FUNCTION IF EXISTS secure_create_order(text, text, text, text, jsonb);
+
 CREATE OR REPLACE FUNCTION secure_create_order(
   p_customer_name text,
   p_customer_phone text,
   p_customer_address text,
   p_customer_city text,
-  p_items jsonb
+  p_items jsonb,
+  p_won_prize text DEFAULT NULL
 )
 RETURNS jsonb
 LANGUAGE plpgsql
@@ -99,6 +105,7 @@ BEGIN
     "total",
     "status",
     "statusAr",
+    "wonPrize",
     "createdAt",
     "updatedAt"
   ) VALUES (
@@ -110,6 +117,7 @@ BEGIN
     v_total,
     'pending',
     'قيد الانتظار',
+    p_won_prize,
     now(),
     now()
   )
@@ -132,6 +140,10 @@ BEGIN
                      '💰 *المجموع:* ' || to_char(v_total, 'FM999,999') || ' IQD' || E'\n' ||
                      '-------------------' || E'\n' ||
                      'للتفاصيل الكاملة يرجى مراجعة لوحة التحكم.';
+         
+         IF p_won_prize IS NOT NULL AND p_won_prize <> '' THEN
+           v_tg_msg := v_tg_msg || E'\n' || '🎁 *الهدية المرفقة:* ' || p_won_prize || E'\n' || '-------------------';
+         END IF;
          
          -- Call Telegram API using pg_net
          PERFORM net.http_post(

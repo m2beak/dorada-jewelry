@@ -35,6 +35,7 @@ import {
   Upload,
   AlertCircle,
   RefreshCw,
+  Gift,
 } from 'lucide-react';
 import {
   addProduct,
@@ -52,6 +53,7 @@ import {
   validateImageFile,
 } from '@/services/database';
 import { BackgroundsTab } from './BackgroundsTab';
+import { WheelSettingsTab } from './WheelSettingsTab';
 import { useAllReviews, useDeleteReviewMutation } from '@/hooks/useReviews';
 import { revokeAdminAccess } from '@/services/security';
 import { testTelegramConnection, getBotInfo } from '@/services/telegram';
@@ -67,7 +69,7 @@ import { orderKeys } from '@/hooks/useOrders';
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { setAdmin, refreshProducts, showToast } = useApp();
-  const [activeTab, setActiveTab] = useState<'products' | 'orders' | 'categories' | 'settings' | 'backgrounds' | 'reviews'>('products');
+  const [activeTab, setActiveTab] = useState<'products' | 'orders' | 'categories' | 'settings' | 'backgrounds' | 'reviews' | 'wheel'>('products');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const queryClient = useQueryClient();
 
@@ -313,6 +315,7 @@ const AdminDashboard: React.FC = () => {
               { id: 'orders', label: 'الطلبات', icon: ShoppingCart },
               { id: 'categories', label: 'التصنيفات', icon: LayoutDashboard },
               { id: 'backgrounds', label: 'الخلفيات والبنرات', icon: ImageIcon },
+              { id: 'wheel', label: 'صناديق الهدايا', icon: Gift },
               { id: 'reviews', label: 'التقييمات والآراء', icon: Star },
               { id: 'settings', label: 'الإعدادات', icon: Settings },
             ].map((item) => (
@@ -370,6 +373,7 @@ const AdminDashboard: React.FC = () => {
                 {activeTab === 'categories' && 'إدارة التصنيفات'}
                 {activeTab === 'settings' && 'الإعدادات'}
                 {activeTab === 'backgrounds' && 'الخلفيات والبنرات'}
+                {activeTab === 'wheel' && 'إعدادات صناديق الهدايا الفاخرة'}
                 {activeTab === 'reviews' && 'إدارة التقييمات والآراء'}
               </h1>
             </div>
@@ -700,6 +704,11 @@ const AdminDashboard: React.FC = () => {
           {/* Backgrounds Tab */}
           {activeTab === 'backgrounds' && (
             <BackgroundsTab />
+          )}
+
+          {/* Wheel Settings Tab */}
+          {activeTab === 'wheel' && (
+            <WheelSettingsTab />
           )}
 
           {/* Reviews Tab */}

@@ -1,4 +1,4 @@
-import { type Product, type Category, type User, type Cart, type Order, type TelegramConfig, type Wishlist, type Review } from '@/types';
+import { type Product, type Category, type User, type Cart, type Order, type TelegramConfig, type Wishlist, type Review, type WheelSettings } from '@/types';
 import { supabase } from '@/lib/supabase';
 
 // Keys for LocalStorage
@@ -274,13 +274,44 @@ export const createOrder = async (order: Omit<Order, 'id' | 'createdAt' | 'updat
   try {
     // SECURITY UPDATE: Use RPC to handle prices and stock server-side
     // This prevents price tampering and race conditions
-    const { data: newOrder, error } = await supabase.rpc('secure_create_order', {
+    const rpcParams: any = {
       p_customer_name: order.customerName,
       p_customer_phone: order.customerPhone,
       p_customer_address: order.customerAddress,
       p_customer_city: order.customerCity,
       p_items: order.items
-    });
+    };
+
+    if (order.wonPrize) {
+      rpcParams.p_won_prize = order.wonPrize;
+    }
+
+    let { data: newOrder, error } = await supabase.rpc('secure_create_order', rpcParams);
+
+    // Backward compatibility: If DB function doesn't support p_won_prize yet, retry without it
+    if (error && error.message && (error.message.includes('p_won_prize') || error.message.includes('secure_create_order') || error.message.includes('does not exist')) && order.wonPrize) {
+      console.warn('RPC with p_won_prize failed, retrying without it. Please update your database schema using secure_create_order.sql');
+      const fallbackParams = { ...rpcParams };
+      delete fallbackParams.p_won_prize;
+
+      const retryResult = await supabase.rpc('secure_create_order', fallbackParams);
+      if (!retryResult.error && retryResult.data) {
+        newOrder = retryResult.data;
+        error = null;
+
+        // Try to update wonPrize separately as a fallback (will fail silently if column doesn't exist)
+        try {
+          await supabase
+            .from('orders')
+            .update({ wonPrize: order.wonPrize } as any)
+            .eq('id', (newOrder as any).id);
+        } catch (updateErr) {
+          console.warn('Fallback update of wonPrize failed:', updateErr);
+        }
+      } else {
+        error = retryResult.error;
+      }
+    }
 
     if (error) {
       console.error('RPC Error:', error);
@@ -558,6 +589,55 @@ export const updateTelegramConfig = async (config: TelegramConfig): Promise<{ su
   } catch (error: any) {
     console.error('Error updating telegram config:', error);
     return { success: false, error: error.message || 'فشل تحديث الإعدادات' };
+  }
+};
+
+// --- Gift Box Config (Supabase) ---
+export const getWheelSettings = async (): Promise<WheelSettings> => {
+  const defaultSettings: WheelSettings = {
+    enabled: false,
+    prizes: [
+      { id: '1', name: '10% Discount', nameAr: 'خصم 10%', chance: 40 },
+      { id: '2', name: 'Free Accessory', nameAr: 'إكسسوار هدية مجاني', chance: 10 },
+      { id: '3', name: 'Free Shipping', nameAr: 'توصيل مجاني', chance: 30 },
+      { id: '4', name: 'Better Luck Next Time', nameAr: 'حظ أوفر المرة القادمة', chance: 20 },
+    ],
+  };
+
+  try {
+    const { data, error } = await supabase
+      .from('settings')
+      .select('value')
+      .eq('id', 'wheel_settings')
+      .single();
+
+    if (error || !data) return defaultSettings;
+    
+    // Ensure all prizes have an ID and a valid chance
+    const settings = data.value as WheelSettings;
+    if (!settings || !Array.isArray(settings.prizes)) return defaultSettings;
+    
+    return settings;
+  } catch (error) {
+    console.error('Error fetching wheel settings:', error);
+    return defaultSettings;
+  }
+};
+
+export const updateWheelSettings = async (settings: WheelSettings): Promise<{ success: boolean; error?: string }> => {
+  try {
+    const { error } = await supabase
+      .from('settings')
+      .upsert({
+        id: 'wheel_settings',
+        value: settings
+      });
+
+    if (error) throw error;
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error updating wheel settings:', error);
+    return { success: false, error: error.message || 'فشل تحديث إعدادات الهدايا' };
   }
 };
 

@@ -11,7 +11,8 @@ import {
   MapPin,
   Eye,
   Star,
-  ChevronLeft
+  ChevronLeft,
+  Gift
 } from 'lucide-react';
 import { motion, AnimatePresence, useInView } from 'framer-motion';
 
@@ -25,6 +26,7 @@ import { useProducts, useCategories } from '@/hooks/useProducts';
 import { useBackgrounds } from '@/hooks/useBackgrounds';
 import { useReviews, useAddReviewMutation } from '@/hooks/useReviews';
 import { useOrders } from '@/hooks/useOrders';
+import { useWheelSettings } from '@/hooks/useWheelSettings';
 
 // Scroll Reveal Helper
 const ScrollReveal: React.FC<{ children: React.ReactNode; delay?: number }> = ({ children, delay = 0 }) => {
@@ -148,7 +150,7 @@ const AutoScrollRow: React.FC<{
 
   return (
     <div 
-      className="w-full overflow-hidden py-3 relative select-none flex justify-start items-center" 
+      className="w-full overflow-hidden py-3 relative select-none flex justify-start items-center group" 
       dir="ltr"
       style={{ direction: 'ltr', justifyContent: 'flex-start' }}
     >
@@ -158,7 +160,7 @@ const AutoScrollRow: React.FC<{
 
       {/* Track 1 */}
       <div
-        className={`flex gap-4 min-w-max pr-4 hover:[animation-play-state:paused] ${animationClass}`}
+        className={`flex gap-4 min-w-max pr-4 group-hover:[animation-play-state:paused] ${animationClass}`}
         style={{
           '--marquee-duration': duration,
         } as React.CSSProperties}
@@ -180,7 +182,7 @@ const AutoScrollRow: React.FC<{
 
       {/* Track 2 (Identical duplicate for seamless circular looping) */}
       <div
-        className={`flex gap-4 min-w-max pr-4 hover:[animation-play-state:paused] ${animationClass}`}
+        className={`flex gap-4 min-w-max pr-4 group-hover:[animation-play-state:paused] ${animationClass}`}
         style={{
           '--marquee-duration': duration,
         } as React.CSSProperties}
@@ -225,6 +227,9 @@ const Shop: React.FC = () => {
 
   // Orders Query (for Best Sellers)
   const { data: orders = [] } = useOrders();
+
+  // Gift Box Settings query
+  const { data: wheelSettings } = useWheelSettings();
 
   // Memoize Featured Products (القطع المميزة)
   const featuredProducts = React.useMemo(() => {
@@ -630,6 +635,44 @@ const Shop: React.FC = () => {
           <section className="py-12 bg-[#070b11] border-t border-white/5">
             <div className="max-w-7xl mx-auto">
               
+              {/* GIFT BOX PROMOTIONAL AD ADVERTISEMENT BANNER */}
+              {wheelSettings?.enabled && (
+                <ScrollReveal>
+                  <div className="mb-12 mx-4 border border-dorada-gold/30 bg-gradient-to-r from-dorada-gold/5 via-transparent to-dorada-gold/5 rounded-2xl p-4 sm:p-5 shadow-[0_0_30px_rgba(212,175,55,0.05)] relative overflow-hidden group">
+                    <div className="absolute inset-0 bg-[#121c2c]/10 pointer-events-none" />
+                    
+                    {/* Glowing gold animation */}
+                    <div className="absolute -inset-y-2 -inset-x-20 bg-gradient-to-r from-transparent via-dorada-gold/5 to-transparent skew-x-12 translate-x-[-100%] group-hover:translate-x-[200%] transition-transform duration-1000 ease-out pointer-events-none" />
+
+                    <div className="flex items-center gap-4 relative z-10 text-right justify-between flex-col sm:flex-row" dir="rtl">
+                      <div className="flex items-center gap-3.5">
+                        <div className="p-3 rounded-full bg-dorada-gold/15 text-dorada-gold flex-shrink-0 animate-bounce shadow-[0_0_15px_rgba(212,175,55,0.2)]">
+                          <Gift className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <h4 className="font-serif text-sm sm:text-base font-bold text-dorada-cream">
+                            صناديق الهدايا الفاخرة للقطع المميزة!
+                          </h4>
+                          <p className="text-[11px] sm:text-xs text-dorada-cream/60 mt-1 leading-relaxed">
+                            تسوقي من <span className="text-dorada-gold font-semibold">"القطع المميزة"</span> واحصلي على فرصة لفتح صندوق هدايا مخملي وربح جوائز فورية وهدايا قيمة عند إتمام الطلب!
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <button 
+                        onClick={() => {
+                          const featuredEl = document.getElementById('shop-featured-heading');
+                          featuredEl?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }}
+                        className="text-[10px] sm:text-xs font-semibold px-4 py-2 rounded-lg bg-dorada-gold text-[#070b11] hover:bg-dorada-gold-light transition-all flex-shrink-0"
+                      >
+                        استعراض القطع المميزة ←
+                      </button>
+                    </div>
+                  </div>
+                </ScrollReveal>
+              )}
+
               {/* FEATURED PRODUCTS SECTION (المنتجات المميزة) - ABOVE ALL CAROUSELS */}
               {featuredProducts.length > 0 && (
                 <ScrollReveal>
@@ -640,7 +683,7 @@ const Shop: React.FC = () => {
                     {/* Header */}
                     <div className="flex items-center justify-between mb-6 px-4 border-r-2 border-dorada-gold pr-3 relative z-10">
                       <div className="flex items-center gap-2">
-                        <h3 className="font-serif text-xl sm:text-2xl font-bold gold-text">القطع المميزة</h3>
+                        <h3 id="shop-featured-heading" className="font-serif text-xl sm:text-2xl font-bold gold-text">القطع المميزة</h3>
                         <span className="animate-pulse flex h-2 w-2 rounded-full bg-dorada-gold shadow-[0_0_10px_#D4AF37]" />
                       </div>
                       <span className="text-[10px] sm:text-xs text-dorada-gold/80 bg-dorada-gold/10 px-3 py-1 rounded-full font-medium tracking-wide border border-dorada-gold/20">
