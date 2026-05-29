@@ -48,7 +48,7 @@
   body {
     @apply bg-background text-foreground antialiased;
     font-family: 'Cairo', 'Montserrat', sans-serif;
-    background: linear-gradient(135deg, #1a2a3d 0%, #0d1a26 50%, #1a2a3d 100%);
+    background: #070b11;
     min-height: 100vh;
   }
   
@@ -82,16 +82,16 @@
 }
 
 @layer components {
-  /* Glassmorphism Card */
+  /* Solid Dark Luxury Card (Glassmorphism removed for max performance) */
   .glass-card {
-    @apply backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl;
+    @apply bg-[#121c2c] border border-white/10 rounded-2xl;
     box-shadow: 
       0 8px 32px rgba(0, 0, 0, 0.3),
       inset 0 1px 0 rgba(255, 255, 255, 0.05);
   }
 
   .glass-card:hover {
-    @apply bg-white/10 border-dorada-gold/30;
+    @apply bg-[#121c2c] border-dorada-gold/30;
     box-shadow: 
       0 12px 40px rgba(0, 0, 0, 0.4),
       0 0 30px rgba(212, 175, 55, 0.15),
@@ -132,9 +132,9 @@
     animation: shimmer 3s ease-in-out infinite;
   }
 
-  /* Navigation Glass */
+  /* Solid Dark Navigation Header (Glassmorphism removed for max performance) */
   .nav-glass {
-    @apply backdrop-blur-xl bg-dorada-blue/80 border-b border-white/5;
+    @apply bg-[#070b11] border-b border-white/10;
   }
 
   /* Product Card Hover */

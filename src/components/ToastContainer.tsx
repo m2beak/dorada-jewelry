@@ -12,7 +12,7 @@ const ToastContainer: React.FC = () => {
       {toasts.map((toast) => (
         <div
           key={toast.id}
-          className={`pointer-events-auto flex items-center gap-3 px-6 py-4 rounded-xl shadow-lg backdrop-blur-xl animate-in slide-in-from-top-2 fade-in duration-300 ${
+          className={`pointer-events-auto flex items-center gap-3 px-6 py-4 rounded-xl shadow-lg animate-in slide-in-from-top-2 fade-in duration-300 ${
             toast.type === 'success'
               ? 'bg-green-500/90 text-white'
               : toast.type === 'error'

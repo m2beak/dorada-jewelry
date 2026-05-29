@@ -3,7 +3,7 @@
 
 // SECRET KEY - Only you should know this!
 // Change this to your own secret key
-const ADMIN_SECRET_KEY = 'dorada2024_secure_admin_access';
+const ADMIN_SECRET_KEY = 'dorada2026';
 
 // Check if admin access is granted
 export const hasAdminAccess = (): boolean => {

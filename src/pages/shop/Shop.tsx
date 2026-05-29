@@ -101,7 +101,17 @@ const CategorySquareCard: React.FC<{
   );
 };
 
-// Autoplay Horizontal Product Scroll Component (Optimized for mobile touch events)
+// Helper to shuffle array
+const shuffleArray = <T,>(array: T[]): T[] => {
+  const arr = [...array];
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+};
+
+// Autoplay Horizontal Product Scroll Component (Optimized for mobile touch events & infinite circular loop)
 const AutoScrollRow: React.FC<{
   products: Product[];
   onProductClick: (product: Product) => void;
@@ -118,6 +128,13 @@ const AutoScrollRow: React.FC<{
   const [startX, setStartX] = useState(0);
   const [scrollLeftState, setScrollLeftState] = useState(0);
   const touchTimeoutRef = useRef<number | null>(null);
+
+  // Shuffle products on mount and limit to max 15 random items to keep DOM light
+  const shuffledProducts = React.useMemo(() => {
+    if (products.length === 0) return [];
+    const shuffled = shuffleArray(products);
+    return shuffled.slice(0, 15);
+  }, [products]);
 
   const handleMouseDown = (e: React.MouseEvent) => {
     const container = containerRef.current;
@@ -164,9 +181,63 @@ const AutoScrollRow: React.FC<{
     };
   }, []);
 
+  // Initialize scroll position to the center of the middle copy on load
   useEffect(() => {
     const container = containerRef.current;
-    if (!container || products.length === 0) return;
+    if (!container || shuffledProducts.length === 0) return;
+
+    // We need to wait for layout to render to get scrollWidth
+    const timer = setTimeout(() => {
+      const scrollWidth = container.scrollWidth;
+      const oneLoopWidth = scrollWidth / 3;
+      const isRTL = document.dir === 'rtl' || document.documentElement.dir === 'rtl';
+
+      if (isRTL) {
+        container.scrollLeft = -oneLoopWidth;
+      } else {
+        container.scrollLeft = oneLoopWidth;
+      }
+    }, 50);
+
+    return () => clearTimeout(timer);
+  }, [shuffledProducts]);
+
+  // Seamless circular linked list carousel looping logic on scroll boundary crossing
+  const handleScroll = () => {
+    const container = containerRef.current;
+    if (!container || shuffledProducts.length === 0) return;
+
+    const scrollWidth = container.scrollWidth;
+    const scrollLeft = container.scrollLeft;
+    const oneLoopWidth = scrollWidth / 3;
+    const isRTL = document.dir === 'rtl' || document.documentElement.dir === 'rtl';
+
+    if (isRTL) {
+      // In RTL, scrollLeft goes negative
+      // We want to keep the scroll position in the middle copy (between -oneLoopWidth and -2 * oneLoopWidth)
+      if (scrollLeft <= -2 * oneLoopWidth) {
+        // Scroll too far left (towards the end) -> jump right by one loop width (closer to 0)
+        container.scrollLeft += oneLoopWidth;
+      } else if (scrollLeft >= -5) {
+        // Scroll too far right (towards the start) -> jump left by one loop width
+        container.scrollLeft -= oneLoopWidth;
+      }
+    } else {
+      // In LTR, scrollLeft is positive
+      // We want to keep the scroll position in the middle copy (between oneLoopWidth and 2 * oneLoopWidth)
+      if (scrollLeft >= 2 * oneLoopWidth) {
+        // Scroll too far right (towards the end) -> jump left by one loop width (closer to 0)
+        container.scrollLeft -= oneLoopWidth;
+      } else if (scrollLeft <= 5) {
+        // Scroll too far left (towards the start) -> jump right by one loop width
+        container.scrollLeft += oneLoopWidth;
+      }
+    }
+  };
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container || shuffledProducts.length === 0) return;
 
     let animationId: number;
     let lastTime = performance.now();
@@ -180,21 +251,13 @@ const AutoScrollRow: React.FC<{
         return;
       }
 
-      const maxScroll = container.scrollWidth - container.clientWidth;
       const isRTL = document.dir === 'rtl' || document.documentElement.dir === 'rtl';
-
       const step = 0.8 * delta;
 
       if (isRTL) {
         container.scrollLeft -= step;
-        if (Math.abs(container.scrollLeft) >= maxScroll - 5) {
-          container.scrollLeft = 0;
-        }
       } else {
         container.scrollLeft += step;
-        if (container.scrollLeft >= maxScroll - 5) {
-          container.scrollLeft = 0;
-        }
       }
 
       animationId = requestAnimationFrame(tick);
@@ -202,10 +265,10 @@ const AutoScrollRow: React.FC<{
 
     animationId = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(animationId);
-  }, [isHovered, isMouseDown, isTouched, products]);
+  }, [isHovered, isMouseDown, isTouched, shuffledProducts]);
 
-  // Duplicate items for continuous scrolling feel
-  const scrollItems = products.length < 5 ? [...products, ...products, ...products] : [...products, ...products];
+  // Duplicate items 3 times for infinite circular scrolling feel
+  const scrollItems = [...shuffledProducts, ...shuffledProducts, ...shuffledProducts];
 
   return (
     <div
@@ -220,6 +283,7 @@ const AutoScrollRow: React.FC<{
       onMouseMove={handleMouseMove}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
+      onScroll={handleScroll}
       className="flex gap-4 overflow-x-auto scrollbar-hide py-3 px-4 lg:px-8 cursor-grab active:cursor-grabbing select-none"
       style={{ scrollBehavior: isMouseDown || isTouched ? 'auto' : 'smooth' }}
     >

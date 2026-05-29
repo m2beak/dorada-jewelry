@@ -866,7 +866,7 @@ const ProductModal: React.FC<{
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/60" onClick={onClose} />
       <div className="relative glass-card w-full max-w-3xl max-h-[90vh] overflow-y-auto">
         <div className="p-6 border-b border-white/10 flex items-center justify-between">
           <h2 className="font-serif text-xl font-bold text-dorada-cream">
@@ -1363,7 +1363,7 @@ const CategoryModal: React.FC<{
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/60" onClick={onClose} />
       <div className="relative glass-card w-full max-w-md">
         <div className="p-6 border-b border-white/10 flex items-center justify-between">
           <h2 className="font-serif text-xl font-bold text-dorada-cream">
@@ -1415,7 +1415,7 @@ const OrderModal: React.FC<{
 }> = ({ order, onClose }) => {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/60" onClick={onClose} />
       <div className="relative glass-card w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <div className="p-6 border-b border-white/10 flex items-center justify-between">
           <div className="flex items-center gap-3">
