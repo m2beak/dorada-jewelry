@@ -9,7 +9,6 @@ import {
   setCurrentUser,
   isAdminLoggedIn,
   createOrder,
-  formatPrice,
   initializeDatabase,
   getWishlist,
   addToWishlistWithProduct,
@@ -46,13 +45,12 @@ interface AppContextType {
   isAdmin: boolean;
   setAdmin: (value: boolean) => void;
 
-  // Order
   placeOrder: (orderData: {
     customerName: string;
     customerPhone: string;
     customerAddress: string;
     customerCity: string;
-  }, wonPrize?: string) => Promise<{ success: boolean; order?: Order; error?: string }>;
+  }, wonPrize?: string, wonPrizeKu?: string) => Promise<{ success: boolean; order?: Order; error?: string }>;
 
   // Toast
   toasts: Toast[];
@@ -63,9 +61,13 @@ interface AppContextType {
   formatPrice: (price: number) => string;
 }
 
+import { useLanguage } from '@/contexts/LanguageContext';
+
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { formatPrice } = useLanguage();
+
   // Initialize database on mount
   useEffect(() => {
     initializeDatabase();
@@ -261,7 +263,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     customerPhone: string;
     customerAddress: string;
     customerCity: string;
-  }, wonPrize?: string) => {
+  }, wonPrize?: string, wonPrizeKu?: string) => {
     const currentCart = getCart();
 
     if (currentCart.items.length === 0) {
@@ -272,6 +274,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       productId: item.product.id,
       name: item.product.name,
       nameAr: item.product.nameAr,
+      nameKu: item.product.nameKu,
       price: item.product.price,
       quantity: item.quantity,
       image: item.product.images[0] || '',
@@ -284,7 +287,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       total: currentCart.total + 5000,
       status: 'pending',
       statusAr: 'قيد الانتظار',
+      statusKu: 'لە چاوەڕوانیدا',
       wonPrize,
+      wonPrizeKu,
     });
 
     if (!result.success || !result.order) {

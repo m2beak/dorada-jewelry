@@ -6,6 +6,7 @@ import {
   Minus,
   Plus,
   ChevronLeft,
+  ChevronRight,
   Heart,
   Instagram,
   Phone,
@@ -25,11 +26,14 @@ import RecentlyViewed, { addToRecentlyViewed } from '@/components/RecentlyViewed
 import type { Product } from '@/types';
 import { getOptimizedImageUrl } from '@/utils/image';
 import { useReviews, useAddReviewMutation } from '@/hooks/useReviews';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 
 const ProductDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { addToCart, cartItemsCount, wishlistItemsCount, formatPrice, addToWishlistFn, isInWishlistFn, removeFromWishlistFn } = useApp();
+  const { language, t, dir, getLocalized } = useLanguage();
   const [product, setProduct] = useState<Product | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
@@ -82,7 +86,7 @@ const ProductDetail: React.FC = () => {
   const handleReviewSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!id || !newReview.name.trim() || !newReview.comment.trim()) {
-      alert('الرجاء كتابة الاسم والتعليق');
+      alert(language === 'ku' ? 'تکایە ناو و کۆمێنت بنووسە' : language === 'en' ? 'Please enter name and comment' : 'الرجاء كتابة الاسم والتعليق');
       return;
     }
 
@@ -96,10 +100,10 @@ const ProductDetail: React.FC = () => {
       });
       setNewReview({ name: '', rating: 5, comment: '' });
       refetchProductReviews();
-      alert('تم إضافة تقييمك للمنتج بنجاح!');
+      alert(t('review_success'));
     } catch (err) {
       console.error(err);
-      alert('فشل إرسال التقييم');
+      alert(t('error'));
     } finally {
       setIsSubmittingReview(false);
     }
@@ -107,15 +111,17 @@ const ProductDetail: React.FC = () => {
 
   if (!product) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#070b11]" dir="rtl">
+      <div className="min-h-screen flex items-center justify-center bg-[#070b11]" dir={dir}>
         <div className="text-center">
           <ShoppingBag className="w-16 h-16 text-dorada-cream/20 mx-auto mb-4" />
-          <p className="text-dorada-cream/50">المنتج غير موجود</p>
+          <p className="text-dorada-cream/50">
+            {language === 'ku' ? 'بابەتەکە بوونی نییە' : language === 'en' ? 'Product not found' : 'المنتج غير موجود'}
+          </p>
           <button
             onClick={() => navigate('/shop')}
             className="mt-4 gold-btn"
           >
-            العودة للمتجر
+            {t('cart_back_to_shop')}
           </button>
         </div>
       </div>
@@ -127,11 +133,11 @@ const ProductDetail: React.FC = () => {
 
   // Combine specs
   const allSpecs = [
-    ...(product.weight ? [{ icon: Scale, label: 'الوزن', value: product.weight }] : []),
-    ...(product.material ? [{ icon: Tag, label: 'المادة', value: product.material }] : []),
-    ...(product.size ? [{ icon: Ruler, label: 'المقاس', value: product.size }] : []),
-    ...(product.color ? [{ icon: Palette, label: 'اللون', value: product.color }] : []),
-    ...(product.warranty ? [{ icon: Shield, label: 'الضمان', value: product.warranty }] : []),
+    ...(product.weight ? [{ icon: Scale, label: t('product_weight'), value: product.weight }] : []),
+    ...(product.material ? [{ icon: Tag, label: t('product_material'), value: product.material }] : []),
+    ...(product.size ? [{ icon: Ruler, label: t('product_size'), value: product.size }] : []),
+    ...(product.color ? [{ icon: Palette, label: t('product_color'), value: product.color }] : []),
+    ...(product.warranty ? [{ icon: Shield, label: t('product_warranty'), value: product.warranty }] : []),
     ...(product.features || []).map(f => ({ icon: Sparkles, label: f.label, value: f.value })),
   ];
 
@@ -140,8 +146,10 @@ const ProductDetail: React.FC = () => {
     ? (productReviews.reduce((sum, r) => sum + r.rating, 0) / productReviews.length).toFixed(1)
     : null;
 
+  const dateLocale = language === 'en' ? 'en-US' : language === 'ku' ? 'ku-IQ' : 'ar-EG';
+
   return (
-    <div className="min-h-screen bg-[#070b11] text-dorada-cream relative overflow-x-hidden font-sans" dir="rtl">
+    <div className="min-h-screen bg-[#070b11] text-dorada-cream relative overflow-x-hidden font-sans" dir={dir}>
       
       {/* Navbar */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-[#070b11] border-b border-white/10 py-3 shadow-md">
@@ -151,19 +159,23 @@ const ProductDetail: React.FC = () => {
               onClick={() => navigate('/shop')}
               className="flex items-center gap-1.5 text-dorada-cream/60 hover:text-dorada-gold transition-colors z-10"
             >
-              <ChevronLeft className="w-5 h-5" />
-              <span className="text-xs sm:text-sm">العودة</span>
+              {dir === 'rtl' ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
+              <span className="text-xs sm:text-sm">
+                {language === 'ku' ? 'گەڕانەوە' : language === 'en' ? 'Back' : 'العودة'}
+              </span>
             </button>
 
             <button 
               onClick={() => navigate('/')} 
               className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-2"
             >
-              <img src="/doradaicon.svg" alt="دورادا" className="w-8 h-8 text-dorada-gold object-contain" />
-              <span className="font-serif text-lg font-bold gold-text">دورادا</span>
+              <img src="/doradaicon.svg" alt={t('brand_name')} className="w-8 h-8 text-dorada-gold object-contain" />
+              <span className="font-serif text-lg font-bold gold-text">{t('brand_name')}</span>
             </button>
 
-            <div className="flex items-center gap-2 z-10 justify-end w-24">
+            <div className="flex items-center gap-2.5 z-10 justify-end">
+              <LanguageSwitcher />
+
               {/* Wishlist */}
               <button
                 onClick={() => navigate('/wishlist')}
@@ -203,7 +215,7 @@ const ProductDetail: React.FC = () => {
             <div className="bg-[#121c2c] border border-white/10 p-4 rounded-2xl">
               <ImageGallery
                 images={product.images}
-                alt={product.nameAr}
+                alt={getLocalized(product, 'name')}
                 className="w-full aspect-square"
               />
             </div>
@@ -211,11 +223,11 @@ const ProductDetail: React.FC = () => {
             {/* Info */}
             <div className="flex flex-col justify-center py-2">
               <span className="inline-block w-fit px-4 py-1 rounded-full bg-[#121c2c] border border-white/10 text-[10px] sm:text-xs font-semibold text-dorada-gold mb-4 uppercase tracking-wider">
-                {product.categoryAr}
+                {getLocalized(product, 'category')}
               </span>
 
               <h1 className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold text-dorada-cream mb-4">
-                {product.nameAr}
+                {getLocalized(product, 'name')}
               </h1>
 
               {/* Average Rating summary */}
@@ -227,22 +239,24 @@ const ProductDetail: React.FC = () => {
                     ))}
                   </div>
                   <span className="text-xs text-dorada-cream/70 font-mono">({averageRating})</span>
-                  <span className="text-xs text-dorada-cream/40">• {productReviews.length} تقييمات</span>
+                  <span className="text-xs text-dorada-cream/40">• {productReviews.length} {t('product_reviews')}</span>
                 </div>
               )}
 
-              <p className="text-sm sm:text-base text-dorada-cream/75 mb-6 leading-relaxed font-light">
-                {product.descriptionAr}
+              <p className="text-sm sm:text-base text-dorada-cream/75 mb-6 leading-relaxed font-light font-sans">
+                {getLocalized(product, 'description')}
               </p>
 
               {/* Stock Status */}
               {isOutOfStock ? (
                 <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-red-500/25 text-red-400 text-xs font-bold w-fit mb-6">
-                  <span>نفذت الكمية</span>
+                  <span>{t('product_out_of_stock')}</span>
                 </div>
               ) : product.quantity <= 3 ? (
                 <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-yellow-500/25 text-yellow-400 text-xs font-medium w-fit mb-6">
-                  <span>متبقي فقط {product.quantity} قطع</span>
+                  <span>
+                    {language === 'ku' ? `تەنها ${product.quantity} دانە ماوە` : language === 'en' ? `Only ${product.quantity} items left` : `متبقي فقط ${product.quantity} قطع`}
+                  </span>
                 </div>
               ) : null}
 
@@ -259,7 +273,7 @@ const ProductDetail: React.FC = () => {
               {/* Quantity Selector */}
               {!isOutOfStock && (
                 <div className="flex items-center gap-3 mb-6">
-                  <span className="text-xs sm:text-sm text-dorada-cream/70">الكمية:</span>
+                  <span className="text-xs sm:text-sm text-dorada-cream/70">{t('product_quantity')}:</span>
                   <div className="flex items-center gap-3 bg-[#121c2c] border border-white/10 px-2.5 py-1 rounded-xl">
                     <button
                       onClick={() => setQuantity(Math.max(1, quantity - 1))}
@@ -295,14 +309,14 @@ const ProductDetail: React.FC = () => {
                   {isAdded ? (
                     <>
                       <Check className="w-4 h-4" />
-                      <span>تمت الإضافة للسلة</span>
+                      <span>{language === 'ku' ? 'زیادکرا بۆ سەبەتە' : language === 'en' ? 'Added to Cart' : 'تمت الإضافة للسلة'}</span>
                     </>
                   ) : isOutOfStock ? (
-                    <span>نفذت الكمية</span>
+                    <span>{t('product_out_of_stock')}</span>
                   ) : (
                     <>
                       <ShoppingBag className="w-4.5 h-4.5" />
-                      <span>أضف إلى السلة</span>
+                      <span>{t('product_add_to_cart')}</span>
                     </>
                   )}
                 </button>
@@ -322,7 +336,9 @@ const ProductDetail: React.FC = () => {
               {/* Specifications */}
               {allSpecs.length > 0 && (
                 <div className="border-t border-white/10 pt-6 mb-6">
-                  <h3 className="font-serif text-sm font-semibold text-dorada-cream mb-4">مواصفات القطعة</h3>
+                  <h3 className="font-serif text-sm font-semibold text-dorada-cream mb-4">
+                    {language === 'ku' ? 'تایبەتمەندییەکانی بابەتەکە' : language === 'en' ? 'Item Specifications' : 'مواصفات القطعة'}
+                  </h3>
                   <div className="grid grid-cols-2 gap-3">
                     {allSpecs.map((spec, index) => (
                       <div key={index} className="flex items-center gap-3 p-3 rounded-xl bg-[#121c2c] border border-white/5">
@@ -344,7 +360,9 @@ const ProductDetail: React.FC = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               {/* Review Display List */}
               <div className="lg:col-span-2 space-y-6">
-                <h3 className="font-serif text-xl sm:text-2xl font-bold text-dorada-cream mb-6">تقييمات المشترين للقطعة</h3>
+                <h3 className="font-serif text-xl sm:text-2xl font-bold text-dorada-cream mb-6">
+                  {language === 'ku' ? 'هەڵسەنگاندنی کڕیاران بۆ بابەتەکە' : language === 'en' ? 'Customer Reviews' : 'تقييمات المشترين للقطعة'}
+                </h3>
                 
                 {productReviews.length > 0 ? (
                   <div className="space-y-4">
@@ -353,7 +371,7 @@ const ProductDetail: React.FC = () => {
                         <div className="flex items-center justify-between mb-2">
                           <h4 className="font-semibold text-dorada-cream text-sm sm:text-base">{review.name}</h4>
                           <span className="text-[10px] text-dorada-cream/40 font-mono">
-                            {new Date(review.createdAt).toLocaleDateString('ar-EG')}
+                            {new Date(review.createdAt).toLocaleDateString(dateLocale)}
                           </span>
                         </div>
                         <div className="flex text-dorada-gold mb-3">
@@ -369,29 +387,29 @@ const ProductDetail: React.FC = () => {
                   </div>
                 ) : (
                   <div className="bg-[#121c2c]/40 border border-white/5 p-6 rounded-2xl text-center text-dorada-cream/45 text-sm">
-                    لا توجد تقييمات لهذا المنتج بعد. كن أول من يكتب تقييماً!
+                    {language === 'ku' ? 'هیچ هەڵسەنگاندنێک بۆ ئەم بابەتە نەکراوە.' : language === 'en' ? 'No reviews for this product yet.' : 'لا توجد تقييمات لهذا المنتج بعد. كن أول من يكتب تقييماً!'}
                   </div>
                 )}
               </div>
 
               {/* Add Review Panel */}
               <div className="bg-[#121c2c] border border-white/10 p-6 rounded-2xl h-fit">
-                <h4 className="font-serif text-lg font-bold text-dorada-cream mb-4">كتابة تقييم للمنتج</h4>
+                <h4 className="font-serif text-lg font-bold text-dorada-cream mb-4">{t('product_add_review')}</h4>
                 <form onSubmit={handleReviewSubmit} className="space-y-4">
                   <div>
-                    <label className="block text-[10px] text-dorada-cream/60 mb-1">الاسم الكامل</label>
+                    <label className="block text-[10px] text-dorada-cream/60 mb-1">{t('review_name')}</label>
                     <input
                       type="text"
                       required
                       value={newReview.name}
                       onChange={(e) => setNewReview({ ...newReview, name: e.target.value })}
                       className="w-full px-3 py-2 text-xs rounded-xl bg-black/20 border border-white/10 text-dorada-cream focus:border-dorada-gold focus:outline-none"
-                      placeholder="اسمك هنا"
+                      placeholder={t('name_placeholder')}
                     />
                   </div>
 
                   <div>
-                    <label className="block text-[10px] text-dorada-cream/60 mb-1">التقييم</label>
+                    <label className="block text-[10px] text-dorada-cream/60 mb-1">{t('review_rating')}</label>
                     <div className="flex gap-1.5">
                       {[1, 2, 3, 4, 5].map((star) => (
                         <button
@@ -407,14 +425,14 @@ const ProductDetail: React.FC = () => {
                   </div>
 
                   <div>
-                    <label className="block text-[10px] text-dorada-cream/60 mb-1">التعليق والملحوظة</label>
+                    <label className="block text-[10px] text-dorada-cream/60 mb-1">{t('review_comment')}</label>
                     <textarea
                       required
                       rows={3}
                       value={newReview.comment}
                       onChange={(e) => setNewReview({ ...newReview, comment: e.target.value })}
                       className="w-full px-3 py-2 text-xs rounded-xl bg-black/20 border border-white/10 text-dorada-cream focus:border-dorada-gold focus:outline-none resize-none"
-                      placeholder="شاركنا رأيك في التصميم وجودة الصياغة..."
+                      placeholder={t('comment_placeholder')}
                     />
                   </div>
 
@@ -423,7 +441,7 @@ const ProductDetail: React.FC = () => {
                     disabled={isSubmittingReview}
                     className="w-full gold-btn py-2 text-[11px] font-bold disabled:opacity-50 mt-2"
                   >
-                    {isSubmittingReview ? 'جاري الإرسال...' : 'إرسال التقييم'}
+                    {isSubmittingReview ? t('sending') : t('review_submit')}
                   </button>
                 </form>
               </div>
@@ -433,8 +451,8 @@ const ProductDetail: React.FC = () => {
           {/* Related Products */}
           {relatedProducts.length > 0 && (
             <div className="mt-16">
-              <h2 className="font-serif text-xl sm:text-2xl font-bold text-dorada-cream mb-6 pr-2 border-r-2 border-dorada-gold">
-                قطع مجوهرات مشابهة
+              <h2 className={`font-serif text-xl sm:text-2xl font-bold text-dorada-cream mb-6 ${dir === 'rtl' ? 'pr-2 border-r-2' : 'pl-2 border-l-2'} border-dorada-gold`}>
+                {t('product_related')}
               </h2>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6">
                 {relatedProducts.map((prod) => (
@@ -446,14 +464,14 @@ const ProductDetail: React.FC = () => {
                     <div className="relative aspect-[4/5] sm:aspect-[3/4] overflow-hidden bg-black/20">
                       <img
                         src={getOptimizedImageUrl(prod.images[0], 300)}
-                        alt={prod.nameAr}
+                        alt={getLocalized(prod, 'name')}
                         loading="lazy"
                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                       />
                     </div>
                     <div className="p-2 sm:p-4 flex flex-col flex-grow justify-between">
                       <h3 className="font-serif text-xs sm:text-base font-semibold text-dorada-cream group-hover:text-dorada-gold transition-colors line-clamp-1">
-                        {prod.nameAr}
+                        {getLocalized(prod, 'name')}
                       </h3>
                       <span className="text-xs font-bold gold-text font-mono mt-1 sm:mt-2">{formatPrice(prod.price)}</span>
                     </div>
@@ -475,10 +493,10 @@ const ProductDetail: React.FC = () => {
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="font-serif text-2xl sm:text-3xl font-bold text-dorada-cream mb-4">
-              للتواصل معنا
+              {t('nav_contact')}
             </h2>
             <p className="text-xs text-dorada-cream/60">
-              نحن هنا لمساعدتك، تواصل معنا عبر القنوات التالية
+              {language === 'ku' ? 'ئێمە لێرەین بۆ هاوکاریکردنی تۆ، پەیوەندیمان پێوە بکە' : language === 'en' ? 'We are here to help, contact us through these channels' : 'نحن هنا لمساعدتك، تواصل معنا عبر القنوات التالية'}
             </p>
           </div>
 
@@ -493,7 +511,9 @@ const ProductDetail: React.FC = () => {
               <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center mx-auto mb-4 group-hover:scale-105 transition-transform">
                 <Instagram className="w-6 h-6 text-white" />
               </div>
-              <h3 className="font-serif text-base font-semibold text-dorada-cream mb-1.5">إنستغرام</h3>
+              <h3 className="font-serif text-base font-semibold text-dorada-cream mb-1.5">
+                {language === 'ku' ? 'ئینستاگرام' : language === 'en' ? 'Instagram' : 'إنستغرام'}
+              </h3>
               <p className="text-dorada-gold text-xs">@dorada_accessories</p>
             </a>
 
@@ -507,7 +527,9 @@ const ProductDetail: React.FC = () => {
               <div className="w-12 h-12 rounded-full bg-[#1e293b] border border-dorada-gold/20 flex items-center justify-center mx-auto mb-4 group-hover:scale-105 transition-transform">
                 <Phone className="w-6 h-6 text-dorada-gold" />
               </div>
-              <h3 className="font-serif text-base font-semibold text-dorada-cream mb-1.5">اتصل بنا</h3>
+              <h3 className="font-serif text-base font-semibold text-dorada-cream mb-1.5">
+                {language === 'ku' ? 'پەیوەندیمان پێوە بکە' : language === 'en' ? 'Call Us' : 'اتصل بنا'}
+              </h3>
               <p className="text-dorada-cream/65 text-xs group-hover:text-dorada-gold transition-colors">07507078397</p>
             </a>
 
@@ -516,22 +538,30 @@ const ProductDetail: React.FC = () => {
               <div className="w-12 h-12 rounded-full bg-[#1e293b] border border-dorada-gold/20 flex items-center justify-center mx-auto mb-4">
                 <MapPin className="w-6 h-6 text-dorada-gold" />
               </div>
-              <h3 className="font-serif text-base font-semibold text-dorada-cream mb-1.5">الموقع</h3>
-              <p className="text-dorada-cream/65 text-xs">قريباً</p>
+              <h3 className="font-serif text-base font-semibold text-dorada-cream mb-1.5">
+                {language === 'ku' ? 'شوێن' : language === 'en' ? 'Location' : 'الموقع'}
+              </h3>
+              <p className="text-dorada-cream/65 text-xs">
+                {language === 'ku' ? 'بەم زووانە' : language === 'en' ? 'Soon' : 'قريباً'}
+              </p>
             </div>
           </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-white/10 bg-[#070b11] py-12 px-4 lg:px-12 text-center md:text-right animate-fade-in">
+      <footer className={`border-t border-white/10 bg-[#070b11] py-12 px-4 lg:px-12 text-center animate-fade-in ${dir === 'rtl' ? 'md:text-right' : 'md:text-left'}`}>
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-3">
-            <img src="/doradaicon.svg" alt="دورادا" className="w-10 h-10 text-dorada-gold object-contain" />
-            <span className="font-serif text-2xl font-bold gold-text">دورادا</span>
+            <img src="/doradaicon.svg" alt={t('brand_name')} className="w-10 h-10 text-dorada-gold object-contain" />
+            <span className="font-serif text-2xl font-bold gold-text">{t('brand_name')}</span>
           </div>
           <p className="text-dorada-cream/30 text-xs text-center">
-            © 2026 دورادا للمجوهرات. جميع الحقوق محفوظة.
+            {language === 'ku' 
+              ? '© ٢٠٢٦ ئێکسسواراتی دۆڕادا. هەموو مافەکان پارێزراون.' 
+              : language === 'en' 
+                ? '© 2026 Dorada Accessories. All rights reserved.' 
+                : '© 2026 دورادا للمجوهرات. جميع الحقوق محفوظة.'}
           </p>
         </div>
       </footer>

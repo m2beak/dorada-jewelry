@@ -168,12 +168,12 @@ const AdminDashboard: React.FC = () => {
   };
 
   // Category Handlers
-  const handleSaveCategory = async (name: string, nameAr: string) => {
+  const handleSaveCategory = async (name: string, nameAr: string, nameKu?: string) => {
     let result;
     if (editingCategory) {
-      result = await updateCategory(editingCategory.id, name, nameAr);
+      result = await updateCategory(editingCategory.id, name, nameAr, nameKu);
     } else {
-      result = await addCategory(name, nameAr);
+      result = await addCategory(name, nameAr, nameKu);
     }
 
     if (result.success) {
@@ -198,20 +198,27 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
-  // Order Handlers
   const handleUpdateOrderStatus = async (orderId: string, status: Order['status'], statusAr: string) => {
+    const statusKu = {
+      pending: 'لە چاوەڕوانیدا',
+      processing: 'لەکاری پڕۆسەسدایە',
+      shipped: 'نێردراوە',
+      delivered: 'گەیەندراوە',
+      cancelled: 'ڕەتکراوەتەوە'
+    }[status];
+
     // 1. Snapshot previous state
     const previousOrders = queryClient.getQueryData<Order[]>(orderKeys.all);
 
     // 2. Optimistic Update
     if (previousOrders) {
       queryClient.setQueryData<Order[]>(orderKeys.all, (old) =>
-        old ? old.map(o => o.id === orderId ? { ...o, status, statusAr } : o) : []
+        old ? old.map(o => o.id === orderId ? { ...o, status, statusAr, statusKu } : o) : []
       );
     }
 
     // 3. API Call
-    const result = await updateOrderStatus(orderId, status, statusAr);
+    const result = await updateOrderStatus(orderId, status, statusAr, statusKu);
 
     // 4. Invalidate (Trigger Refresh)
     // We invalidate regardless of success/error to ensure eventually consistency,
@@ -845,13 +852,16 @@ const ProductModal: React.FC<{
   const [formData, setFormData] = useState({
     name: product?.name || '',
     nameAr: product?.nameAr || '',
+    nameKu: product?.nameKu || '',
     description: product?.description || '',
     descriptionAr: product?.descriptionAr || '',
+    descriptionKu: product?.descriptionKu || '',
     price: product?.price || 0,
     originalPrice: product?.originalPrice || 0,
     images: product?.images || [],
     category: product?.category || categories[0]?.name || '',
     categoryAr: product?.categoryAr || categories[0]?.nameAr || '',
+    categoryKu: product?.categoryKu || categories[0]?.nameKu || '',
     inStock: product?.inStock ?? true,
     featured: product?.featured ?? false,
     quantity: product?.quantity ?? 0,
@@ -877,6 +887,7 @@ const ProductModal: React.FC<{
       ...formData,
       category: categoryName,
       categoryAr: selectedCat?.nameAr || '',
+      categoryKu: selectedCat?.nameKu || '',
     });
   };
 
@@ -922,7 +933,7 @@ const ProductModal: React.FC<{
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
 
           {/* Basic Info */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm text-dorada-cream/80 mb-2">الاسم (عربي) *</label>
               <input
@@ -941,6 +952,15 @@ const ProductModal: React.FC<{
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-dorada-cream focus:border-dorada-gold focus:outline-none"
                 required
+              />
+            </div>
+            <div>
+              <label className="block text-sm text-dorada-cream/80 mb-2">الاسم (كردي سوراني)</label>
+              <input
+                type="text"
+                value={formData.nameKu || ''}
+                onChange={(e) => setFormData({ ...formData, nameKu: e.target.value })}
+                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-dorada-cream focus:border-dorada-gold focus:outline-none"
               />
             </div>
           </div>
@@ -1041,7 +1061,7 @@ const ProductModal: React.FC<{
           </div>
 
           {/* Descriptions */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm text-dorada-cream/80 mb-2">الوصف (عربي)</label>
               <textarea
@@ -1056,6 +1076,15 @@ const ProductModal: React.FC<{
               <textarea
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                rows={3}
+                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-dorada-cream focus:border-dorada-gold focus:outline-none resize-none"
+              />
+            </div>
+            <div>
+              <label className="block text-sm text-dorada-cream/80 mb-2">الوصف (كردي سوراني)</label>
+              <textarea
+                value={formData.descriptionKu || ''}
+                onChange={(e) => setFormData({ ...formData, descriptionKu: e.target.value })}
                 rows={3}
                 className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-dorada-cream focus:border-dorada-gold focus:outline-none resize-none"
               />
@@ -1393,15 +1422,16 @@ const MultiImageUpload: React.FC<{
 // Category Modal Component
 const CategoryModal: React.FC<{
   category: Category | null;
-  onSave: (name: string, nameAr: string) => void;
+  onSave: (name: string, nameAr: string, nameKu?: string) => void;
   onClose: () => void;
 }> = ({ category, onSave, onClose }) => {
   const [name, setName] = useState(category?.name || '');
   const [nameAr, setNameAr] = useState(category?.nameAr || '');
+  const [nameKu, setNameKu] = useState(category?.nameKu || '');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave(name, nameAr);
+    onSave(name, nameAr, nameKu);
   };
 
   return (
@@ -1435,6 +1465,15 @@ const CategoryModal: React.FC<{
               onChange={(e) => setName(e.target.value)}
               className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-dorada-cream focus:border-dorada-gold focus:outline-none"
               required
+            />
+          </div>
+          <div>
+            <label className="block text-sm text-dorada-cream/80 mb-2">الاسم (كردي سوراني)</label>
+            <input
+              type="text"
+              value={nameKu}
+              onChange={(e) => setNameKu(e.target.value)}
+              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-dorada-cream focus:border-dorada-gold focus:outline-none"
             />
           </div>
           <div className="flex gap-3 pt-4">

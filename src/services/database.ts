@@ -201,11 +201,11 @@ export const getCategories = async (): Promise<Category[]> => {
   }
 };
 
-export const addCategory = async (name: string, nameAr: string): Promise<{ success: boolean; error?: string }> => {
+export const addCategory = async (name: string, nameAr: string, nameKu?: string): Promise<{ success: boolean; error?: string }> => {
   try {
     const { error } = await supabase
       .from('categories')
-      .insert({ name, nameAr });
+      .insert({ name, nameAr, nameKu });
 
     if (error) throw error;
     return { success: true };
@@ -215,11 +215,11 @@ export const addCategory = async (name: string, nameAr: string): Promise<{ succe
   }
 };
 
-export const updateCategory = async (id: string, name: string, nameAr: string): Promise<{ success: boolean; error?: string }> => {
+export const updateCategory = async (id: string, name: string, nameAr: string, nameKu?: string): Promise<{ success: boolean; error?: string }> => {
   try {
     const { error } = await supabase
       .from('categories')
-      .update({ name, nameAr })
+      .update({ name, nameAr, nameKu })
       .eq('id', id);
 
     if (error) throw error;
@@ -318,6 +318,23 @@ export const createOrder = async (order: Omit<Order, 'id' | 'createdAt' | 'updat
       return { success: false, error: error.message || 'فشل إنشاء الطلب' };
     }
 
+    if (newOrder) {
+      try {
+        await supabase
+          .from('orders')
+          .update({
+            statusKu: order.statusKu,
+            wonPrizeKu: order.wonPrizeKu
+          } as any)
+          .eq('id', (newOrder as any).id);
+        
+        (newOrder as any).statusKu = order.statusKu;
+        (newOrder as any).wonPrizeKu = order.wonPrizeKu;
+      } catch (updateErr) {
+        console.warn('Updating extra Kurdish columns failed:', updateErr);
+      }
+    }
+
     // RPC returns the order object directly (casted as any/jsonb)
     return { success: true, order: newOrder as Order };
 
@@ -327,7 +344,7 @@ export const createOrder = async (order: Omit<Order, 'id' | 'createdAt' | 'updat
   }
 };
 
-export const updateOrderStatus = async (id: string, status: Order['status'], statusAr: string): Promise<{ success: boolean; order?: Order; error?: string }> => {
+export const updateOrderStatus = async (id: string, status: Order['status'], statusAr: string, statusKu?: string): Promise<{ success: boolean; order?: Order; error?: string }> => {
   try {
     const { data: order, error: fetchError } = await supabase
       .from('orders')
@@ -382,9 +399,14 @@ export const updateOrderStatus = async (id: string, status: Order['status'], sta
       }
     }
 
+    const updatePayload: any = { status, statusAr, updatedAt: new Date().toISOString() };
+    if (statusKu) {
+      updatePayload.statusKu = statusKu;
+    }
+
     const { data: updated, error: updateError } = await supabase
       .from('orders')
-      .update({ status, statusAr, updatedAt: new Date().toISOString() })
+      .update(updatePayload)
       .eq('id', id)
       .select()
       .single();

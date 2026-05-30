@@ -11,15 +11,18 @@ import {
   Heart
 } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { ProductReviewsSummary } from '@/components/ProductReviewsSummary';
 
 const Cart: React.FC = () => {
   const navigate = useNavigate();
   const { cart, removeFromCart, updateCartItemQuantity, formatPrice, wishlistItemsCount } = useApp();
+  const { language, t, dir, getLocalized } = useLanguage();
 
   if (cart.items.length === 0) {
     return (
-      <div className="min-h-screen bg-[#070b11] text-dorada-cream" dir="rtl">
+      <div className="min-h-screen bg-[#070b11] text-dorada-cream" dir={dir}>
         {/* Navbar */}
         <nav className="fixed top-0 left-0 right-0 z-50 bg-[#070b11] border-b border-white/10 py-4 shadow-md">
           <div className="w-full px-4 lg:px-8 relative">
@@ -28,19 +31,20 @@ const Cart: React.FC = () => {
                 onClick={() => navigate('/shop')}
                 className="flex items-center gap-2 text-dorada-cream/60 hover:text-dorada-gold transition-colors z-10"
               >
-                <ChevronLeft className="w-5 h-5" />
-                <span className="text-sm">العودة للمتجر</span>
+                <ChevronLeft className={`w-5 h-5 ${dir === 'rtl' ? '' : 'rotate-180'}`} />
+                <span className="text-sm">{t('cart_back_to_shop')}</span>
               </button>
 
               <button 
                 onClick={() => navigate('/')} 
                 className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-2"
               >
-                <img src="/doradaicon.svg" alt="دورادا" className="w-8 h-8 text-dorada-gold object-contain" />
-                <span className="font-serif text-lg font-bold gold-text">دورادا</span>
+                <img src="/doradaicon.svg" alt={t('brand_name')} className="w-8 h-8 text-dorada-gold object-contain" />
+                <span className="font-serif text-lg font-bold gold-text">{t('brand_name')}</span>
               </button>
 
-              <div className="flex items-center gap-2 z-10 w-24 justify-end">
+              <div className="flex items-center gap-2.5 z-10 justify-end">
+                <LanguageSwitcher />
                 <button
                   onClick={() => navigate('/wishlist')}
                   className="relative p-2 rounded-full bg-[#121c2c] border border-white/5 hover:bg-dorada-gold/20 text-dorada-cream hover:text-dorada-gold transition-all"
@@ -64,17 +68,17 @@ const Cart: React.FC = () => {
               <ShoppingBag className="w-12 h-12 text-dorada-cream/30" />
             </div>
             <h2 className="font-serif text-2xl font-bold text-dorada-cream mb-2">
-              السلة فارغة
+              {t('cart_empty')}
             </h2>
             <p className="text-dorada-cream/50 mb-6">
-              لم تضف أي منتجات إلى سلة التسوق بعد
+              {language === 'ar' ? 'لم تضف أي منتجات إلى سلة التسوق بعد' : language === 'ku' ? 'هێشتا هیچ بابەتێکت بۆ سەبەتەی کڕین زیاد نەکردووە' : 'You have not added any products to your shopping cart yet'}
             </p>
             <button
               onClick={() => navigate('/shop')}
               className="gold-btn flex items-center gap-2 mx-auto"
             >
-              <span>تصفح المنتجات</span>
-              <ArrowRight className="w-4 h-4" />
+              <span>{t('cart_back_to_shop')}</span>
+              <ArrowRight className={`w-4 h-4 ${dir === 'rtl' ? 'rotate-180' : ''}`} />
             </button>
           </div>
         </main>
@@ -83,7 +87,7 @@ const Cart: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#070b11] text-dorada-cream" dir="rtl">
+    <div className="min-h-screen bg-[#070b11] text-dorada-cream" dir={dir}>
       {/* Navbar */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-[#070b11] border-b border-white/10 py-4 shadow-md">
         <div className="w-full px-4 lg:px-8 relative">
@@ -92,22 +96,23 @@ const Cart: React.FC = () => {
               onClick={() => navigate('/shop')}
               className="flex items-center gap-2 text-dorada-cream/60 hover:text-dorada-gold transition-colors z-10"
             >
-              <ChevronLeft className="w-5 h-5" />
-              <span className="text-sm">العودة للمتجر</span>
+              <ChevronLeft className={`w-5 h-5 ${dir === 'rtl' ? '' : 'rotate-180'}`} />
+              <span className="text-sm">{t('cart_back_to_shop')}</span>
             </button>
 
             <button 
               onClick={() => navigate('/')} 
               className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-2"
             >
-              <img src="/doradaicon.svg" alt="دورادا" className="w-8 h-8 text-dorada-gold object-contain" />
-              <span className="font-serif text-lg font-bold gold-text">دورادا</span>
+              <img src="/doradaicon.svg" alt={t('brand_name')} className="w-8 h-8 text-dorada-gold object-contain" />
+              <span className="font-serif text-lg font-bold gold-text">{t('brand_name')}</span>
             </button>
 
-            <div className="flex items-center justify-end z-10 w-24">
+            <div className="flex items-center gap-2.5 z-10 justify-end">
+              <LanguageSwitcher />
               <button
                 onClick={() => navigate('/wishlist')}
-                className="relative p-2 rounded-full bg-[#121c2c] border border-white/5 hover:border-dorada-gold/20 text-dorada-cream hover:text-dorada-gold transition-all"
+                className="relative p-2 rounded-full bg-[#121c2c] border border-white/5 hover:bg-dorada-gold/20 text-dorada-cream hover:text-dorada-gold transition-all"
               >
                 <Heart className="w-5 h-5" />
                 {wishlistItemsCount > 0 && (
@@ -125,7 +130,7 @@ const Cart: React.FC = () => {
       <main className="pt-24 pb-20 px-4 lg:px-8">
         <div className="max-w-6xl mx-auto">
           <h1 className="font-serif text-3xl font-bold text-dorada-cream mb-8">
-            سلة التسوق
+            {t('cart_title')}
           </h1>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -136,16 +141,16 @@ const Cart: React.FC = () => {
                   <div className="w-24 h-24 rounded-lg overflow-hidden flex-shrink-0">
                     <img
                       src={item.product.images[0]}
-                      alt={item.product.nameAr}
+                      alt={getLocalized(item.product, 'name')}
                       className="w-full h-full object-cover"
                     />
                   </div>
                   <div className="flex-1 flex flex-col justify-between">
                     <div>
                       <h3 className="font-serif text-lg font-semibold text-dorada-cream">
-                        {item.product.nameAr}
+                        {getLocalized(item.product, 'name')}
                       </h3>
-                      <p className="text-sm text-dorada-cream/50">{item.product.categoryAr}</p>
+                      <p className="text-sm text-dorada-cream/50">{getLocalized(item.product, 'category')}</p>
                       
                       {/* Product reviews summary shown right inside cart item */}
                       <ProductReviewsSummary productId={item.product.id} />
@@ -188,27 +193,27 @@ const Cart: React.FC = () => {
             <div className="lg:sticky lg:top-24 h-fit">
               <div className="bg-[#121c2c] border border-white/10 p-6 rounded-2xl">
                 <h2 className="font-serif text-xl font-bold text-dorada-cream mb-6">
-                  ملخص الطلب
+                  {language === 'ar' ? 'ملخص الطلب' : language === 'ku' ? 'کورتەی داواکاری' : 'Order Summary'}
                 </h2>
 
                 <div className="space-y-3 mb-6">
                   <div className="flex justify-between text-dorada-cream/60">
-                    <span>عدد المنتجات</span>
+                    <span>{language === 'ar' ? 'عدد المنتجات' : language === 'ku' ? 'ژمارەی بابەتەکان' : 'Items Count'}</span>
                     <span>{cart.items.reduce((sum, item) => sum + item.quantity, 0)}</span>
                   </div>
                   <div className="flex justify-between text-dorada-cream/60">
-                    <span>المجموع الفرعي</span>
+                    <span>{t('cart_subtotal')}</span>
                     <span>{formatPrice(cart.total)}</span>
                   </div>
                   <div className="flex justify-between text-dorada-cream/60">
-                    <span>الشحن</span>
+                    <span>{t('cart_shipping')}</span>
                     <span className="text-dorada-cream">{formatPrice(5000)}</span>
                   </div>
                 </div>
 
                 <div className="border-t border-white/10 pt-4 mb-6">
                   <div className="flex justify-between items-center">
-                    <span className="text-lg text-dorada-cream font-medium">المجموع الكلي</span>
+                    <span className="text-lg text-dorada-cream font-medium">{t('cart_total')}</span>
                     <span className="text-2xl font-bold gold-text">{formatPrice(cart.total + 5000)}</span>
                   </div>
                 </div>
@@ -217,13 +222,13 @@ const Cart: React.FC = () => {
                   onClick={() => navigate('/checkout')}
                   className="w-full gold-btn py-4 flex items-center justify-center gap-2"
                 >
-                  <span>إتمام الطلب</span>
-                  <ArrowRight className="w-5 h-5" />
+                  <span>{t('cart_checkout')}</span>
+                  <ArrowRight className={`w-5 h-5 ${dir === 'rtl' ? 'rotate-180' : ''}`} />
                 </button>
 
                 <div className="mt-6 flex items-center justify-center gap-2 text-dorada-cream/40 text-sm">
                   <Package className="w-4 h-4" />
-                  <span>توصيل سريع لجميع المحافظات</span>
+                  <span>{t('feature_fast_delivery')}</span>
                 </div>
               </div>
             </div>

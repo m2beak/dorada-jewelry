@@ -136,13 +136,19 @@ const AppContent: React.FC = () => {
   );
 };
 
+import { LanguageProvider } from '@/contexts/LanguageContext';
+import { LanguageGate } from '@/components/LanguageGate';
+
 function App() {
   return (
-    <AppProvider>
-      <Router>
-        <AppContent />
-      </Router>
-    </AppProvider>
+    <LanguageProvider>
+      <AppProvider>
+        <Router>
+          <LanguageGate />
+          <AppContent />
+        </Router>
+      </AppProvider>
+    </LanguageProvider>
   );
 };
 

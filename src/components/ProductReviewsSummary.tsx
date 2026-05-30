@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Star, ChevronDown, ChevronUp } from 'lucide-react';
 import { useReviews } from '@/hooks/useReviews';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface ProductReviewsSummaryProps {
   productId: string;
@@ -9,15 +10,18 @@ interface ProductReviewsSummaryProps {
 export const ProductReviewsSummary: React.FC<ProductReviewsSummaryProps> = ({ productId }) => {
   const { data: reviews = [], isLoading } = useReviews(productId);
   const [isOpen, setIsOpen] = useState(false);
+  const { language, dir } = useLanguage();
 
   if (isLoading) {
-    return <span className="text-[10px] text-dorada-cream/40 font-light">جاري تحميل التقييمات...</span>;
+    return <span className="text-[10px] text-dorada-cream/40 font-light">
+      {language === 'ku' ? 'هەڵسەنگاندنەکان باردەکرێن...' : language === 'en' ? 'Loading reviews...' : 'جاري تحميل التقييمات...'}
+    </span>;
   }
 
   if (reviews.length === 0) {
     return (
       <span className="text-[10px] text-dorada-cream/30 font-light">
-        لا توجد تقييمات بعد
+        {language === 'ku' ? 'هیچ هەڵسەنگاندنێک نییە' : language === 'en' ? 'No reviews yet' : 'لا توجد تقييمات بعد'}
       </span>
     );
   }
@@ -26,8 +30,10 @@ export const ProductReviewsSummary: React.FC<ProductReviewsSummaryProps> = ({ pr
     reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
   ).toFixed(1);
 
+  const dateLocale = language === 'en' ? 'en-US' : language === 'ku' ? 'ku-IQ' : 'ar-EG';
+
   return (
-    <div className="mt-2 text-right" dir="rtl">
+    <div className={`mt-2 ${dir === 'rtl' ? 'text-right' : 'text-left'}`} dir={dir}>
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="inline-flex items-center gap-1.5 text-xs text-dorada-cream/60 hover:text-dorada-gold transition-colors focus:outline-none"
@@ -44,19 +50,27 @@ export const ProductReviewsSummary: React.FC<ProductReviewsSummaryProps> = ({ pr
         </div>
         <span className="font-mono text-[11px] text-dorada-gold">({averageRating})</span>
         <span className="text-[10px] border-b border-dashed border-white/20 hover:border-dorada-gold">
-          {reviews.length} {reviews.length === 1 ? 'تقييم' : 'تقييمات'}
+          {reviews.length} {
+            language === 'ku' 
+              ? 'هەڵسەنگاندن' 
+              : language === 'en' 
+                ? (reviews.length === 1 ? 'review' : 'reviews') 
+                : (reviews.length === 1 ? 'تقييم' : 'تقييمات')
+          }
         </span>
         {isOpen ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
       </button>
 
       {isOpen && (
-        <div className="mt-2 space-y-2 bg-black/35 border border-white/5 rounded-xl p-3 max-h-40 overflow-y-auto text-right">
+        <div className={`mt-2 space-y-2 bg-black/35 border border-white/5 rounded-xl p-3 max-h-40 overflow-y-auto ${
+          dir === 'rtl' ? 'text-right' : 'text-left'
+        }`}>
           {reviews.map((review) => (
             <div key={review.id} className="border-b border-white/5 last:border-b-0 pb-2 last:pb-0">
               <div className="flex items-center justify-between gap-2 mb-1">
                 <span className="font-medium text-[11px] text-dorada-cream">{review.name}</span>
                 <span className="text-[9px] text-dorada-cream/30 font-mono">
-                  {new Date(review.createdAt).toLocaleDateString('ar-EG')}
+                  {new Date(review.createdAt).toLocaleDateString(dateLocale)}
                 </span>
               </div>
               <div className="flex text-dorada-gold mb-1">
@@ -67,7 +81,7 @@ export const ProductReviewsSummary: React.FC<ProductReviewsSummaryProps> = ({ pr
                   />
                 ))}
               </div>
-              <p className="text-[10px] text-dorada-cream/70 leading-relaxed font-light">
+              <p className="text-[10px] text-dorada-cream/70 leading-relaxed font-light font-sans">
                 {review.comment}
               </p>
             </div>

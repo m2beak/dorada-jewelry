@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Gift, Check, Sparkles, HelpCircle } from 'lucide-react';
 import type { Prize, WheelSettings } from '@/types';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface JewelryBoxOpenerModalProps {
   settings: WheelSettings;
@@ -15,18 +16,28 @@ export const JewelryBoxOpenerModal: React.FC<JewelryBoxOpenerModalProps> = ({ se
   const [revealedPrizes, setRevealedPrizes] = useState<Record<string, Prize>>({});
   const [isOpening, setIsOpening] = useState(false);
   const [showDoneButton, setShowDoneButton] = useState(false);
+  const { language, t, dir, getLocalized } = useLanguage();
 
   const boxes = [
-    { id: 'box-left', label: 'الصندوق الأيمن' },
-    { id: 'box-center', label: 'الصندوق الأوسط' },
-    { id: 'box-right', label: 'الصندوق الأيسر' }
+    { 
+      id: 'box-left', 
+      label: language === 'ku' ? 'سندووقی ڕاست' : language === 'en' ? 'Right Box' : 'الصندوق الأيمن' 
+    },
+    { 
+      id: 'box-center', 
+      label: language === 'ku' ? 'سندووقی ناوەڕاست' : language === 'en' ? 'Center Box' : 'الصندوق الأوسط' 
+    },
+    { 
+      id: 'box-right', 
+      label: language === 'ku' ? 'سندووقی چەپ' : language === 'en' ? 'Left Box' : 'الصندوق الأيسر' 
+    }
   ];
 
   // Weighted random selection algorithm
   const selectPrize = (): Prize => {
     const activePrizes = settings.prizes.filter(p => p.chance > 0);
     if (activePrizes.length === 0) {
-      return { id: 'fallback', name: 'Free Shipping', nameAr: 'توصيل مجاني', chance: 100 };
+      return { id: 'fallback', name: 'Free Shipping', nameAr: 'توصيل مجاني', nameKu: 'گەیاندنی خۆڕایی', chance: 100 };
     }
 
     const totalChance = activePrizes.reduce((sum, p) => sum + p.chance, 0);
@@ -92,7 +103,7 @@ export const JewelryBoxOpenerModal: React.FC<JewelryBoxOpenerModalProps> = ({ se
   const particles = Array.from({ length: 45 });
 
   return (
-    <div className="fixed inset-0 bg-black/95 flex flex-col items-center justify-center p-4 z-[9999] overflow-y-auto select-none font-sans">
+    <div className="fixed inset-0 bg-black/95 flex flex-col items-center justify-center p-4 z-[9999] overflow-y-auto select-none font-sans" dir={dir}>
       {/* Decorative Gold Particles in background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-20">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-dorada-gold/5 rounded-full filter blur-[100px] animate-pulse" />
@@ -114,14 +125,14 @@ export const JewelryBoxOpenerModal: React.FC<JewelryBoxOpenerModalProps> = ({ se
           </motion.div>
 
           <h2 className="font-serif text-2xl sm:text-4xl font-bold text-dorada-cream tracking-wide">
-            {!selectedBoxId ? 'هدية مميزة بانتظارك!' : showDoneButton ? 'مبارك لك الهدية!' : 'افتح الصندوق وكود الهدية...'}
+            {!selectedBoxId ? t('gift_title_waiting') : showDoneButton ? t('gift_title_revealed') : t('gift_title_opening')}
           </h2>
           <p className="text-xs sm:text-sm text-dorada-cream/60 max-w-md mx-auto leading-relaxed">
             {!selectedBoxId 
-              ? 'لقد اشتريت قطعة مميزة! اختر أحد صناديق المجوهرات المخملية بالأسفل لتكتشف هديتك القيمة المرفقة مع الطلب.' 
+              ? t('gift_desc_waiting') 
               : showDoneButton 
-              ? 'تم ربط هديتك بنجاح برقم طلبك وسيتم تجهيزها وإرسالها مع شحنتك!'
-              : 'جاري فتح صندوق المجوهرات الفاخر...'}
+              ? t('gift_desc_revealed')
+              : t('gift_desc_opening')}
           </p>
         </div>
 
@@ -225,13 +236,13 @@ export const JewelryBoxOpenerModal: React.FC<JewelryBoxOpenerModalProps> = ({ se
                       >
                         {prize.imageUrl ? (
                           <div className="w-10 h-10 sm:w-16 sm:h-16 rounded-lg overflow-hidden border border-dorada-gold/25 mb-1.5 flex-shrink-0 bg-[#070b11]">
-                            <img src={prize.imageUrl} alt={prize.nameAr} className="w-full h-full object-cover" />
+                            <img src={prize.imageUrl} alt={getLocalized(prize, 'name')} className="w-full h-full object-cover" />
                           </div>
                         ) : (
                           <Gift className={`w-4 h-4 sm:w-6 sm:h-6 mb-1 sm:mb-1.5 ${isSelected ? 'text-dorada-gold animate-bounce' : 'text-dorada-cream/40'}`} />
                         )}
-                        <span className="text-[10px] sm:text-xs text-dorada-cream/45 uppercase tracking-wider font-mono">الهدية</span>
-                        <span className="text-[11px] sm:text-sm font-bold text-dorada-cream whitespace-nowrap mt-0.5">{prize.nameAr}</span>
+                        <span className="text-[10px] sm:text-xs text-dorada-cream/45 uppercase tracking-wider font-mono">{t('gift_win_card_prefix')}</span>
+                        <span className="text-[11px] sm:text-sm font-bold text-dorada-cream whitespace-nowrap mt-0.5">{getLocalized(prize, 'name')}</span>
                       </motion.div>
                     )}
                   </AnimatePresence>
@@ -283,10 +294,10 @@ export const JewelryBoxOpenerModal: React.FC<JewelryBoxOpenerModalProps> = ({ se
                     </span>
                   ) : isSelected ? (
                     <span className="text-dorada-gold font-bold flex items-center gap-1 bg-dorada-gold/10 border border-dorada-gold/20 px-3 py-1 rounded-full animate-pulse">
-                      صندوقك المختار ✨
+                      {t('gift_selected_label')}
                     </span>
                   ) : (
-                    <span className="text-dorada-cream/20">غير محدد</span>
+                    <span className="text-dorada-cream/20">{t('gift_not_selected_label')}</span>
                   )}
                 </span>
               </div>
@@ -306,7 +317,7 @@ export const JewelryBoxOpenerModal: React.FC<JewelryBoxOpenerModalProps> = ({ se
               >
                 {/* Winner Card description */}
                 <div className="text-sm border border-dorada-gold/20 bg-dorada-gold/5 px-6 py-2 rounded-xl text-dorada-cream/80 max-w-sm mx-auto shadow-inner">
-                  لقد ربحتِ: <strong className="text-dorada-gold text-base mx-1">{winningPrize.nameAr}</strong> 🎉
+                  {t('gift_win_alert')} <strong className="text-dorada-gold text-base mx-1">{getLocalized(winningPrize, 'name')}</strong> 🎉
                 </div>
                 
                 <button
@@ -314,7 +325,7 @@ export const JewelryBoxOpenerModal: React.FC<JewelryBoxOpenerModalProps> = ({ se
                   className="gold-btn py-3 px-10 text-sm font-semibold flex items-center gap-2 shadow-[0_0_20px_rgba(212,175,55,0.25)] animate-pulse"
                 >
                   <Check className="w-4 h-4" />
-                  <span>تأكيد واستكمال الدفع</span>
+                  <span>{t('gift_confirm_btn')}</span>
                 </button>
               </motion.div>
             )}

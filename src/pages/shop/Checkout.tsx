@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ChevronLeft,
+  ChevronRight,
   Check,
   MapPin,
   User,
@@ -14,12 +15,15 @@ import { useApp } from '@/contexts/AppContext';
 import { ProductReviewsSummary } from '@/components/ProductReviewsSummary';
 import { useWheelSettings } from '@/hooks/useWheelSettings';
 import { JewelryBoxOpenerModal } from '@/components/JewelryBoxOpenerModal';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import type { Prize } from '@/types';
 
 const Checkout: React.FC = () => {
   const navigate = useNavigate();
   const { cart, formatPrice, placeOrder } = useApp();
   const { data: wheelSettings } = useWheelSettings();
+  const { language, t, dir, getLocalized } = useLanguage();
 
   const [formData, setFormData] = useState({
     customerName: '',
@@ -41,13 +45,16 @@ const Checkout: React.FC = () => {
   // Redirect if cart is empty
   if (cart.items.length === 0 && !orderSuccess && !showBoxOpener) {
     return (
-      <div className="min-h-screen bg-[#070b11] text-dorada-cream" dir="rtl">
+      <div className="min-h-screen bg-[#070b11] text-dorada-cream" dir={dir}>
         <nav className="fixed top-0 left-0 right-0 z-50 bg-[#070b11] border-b border-white/10 py-4 shadow-md">
           <div className="w-full px-4 lg:px-8 relative h-12 flex items-center justify-between">
             <button onClick={() => navigate('/')} className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-2">
-              <img src="/doradaicon.svg" alt="دورادا" className="w-8 h-8 text-dorada-gold object-contain" />
-              <span className="font-serif text-lg font-bold gold-text">دورادا</span>
+              <img src="/doradaicon.svg" alt={t('brand_name')} className="w-8 h-8 text-dorada-gold object-contain" />
+              <span className="font-serif text-lg font-bold gold-text">{t('brand_name')}</span>
             </button>
+            <div className="flex items-center justify-end z-10 w-full">
+              <LanguageSwitcher />
+            </div>
           </div>
         </nav>
         <main className="pt-24 pb-20 px-4 lg:px-8 min-h-screen flex items-center justify-center">
@@ -56,16 +63,16 @@ const Checkout: React.FC = () => {
               <AlertCircle className="w-12 h-12 text-dorada-cream/30" />
             </div>
             <h2 className="font-serif text-2xl font-bold text-dorada-cream mb-2">
-              السلة فارغة
+              {language === 'ku' ? 'سەبەتەکەت چۆڵە!' : language === 'en' ? 'Cart is empty' : 'السلة فارغة'}
             </h2>
             <p className="text-dorada-cream/50 mb-6">
-              لا يمكن إتمام الطلب، السلة فارغة
+              {language === 'ku' ? 'ناتوانیت داواکاری پێشکەش بکەیت چونکە سەبەتەکەت چۆڵە' : language === 'en' ? 'Cannot place order, your cart is empty' : 'لا يمكن إتمام الطلب، السلة فارغة'}
             </p>
             <button
               onClick={() => navigate('/shop')}
               className="gold-btn"
             >
-              العودة للمتجر
+              {t('cart_back_to_shop')}
             </button>
           </div>
         </main>
@@ -107,21 +114,21 @@ const Checkout: React.FC = () => {
     const newErrors: Record<string, string> = {};
 
     if (!formData.customerName.trim()) {
-      newErrors.customerName = 'الرجاء إدخال الاسم';
+      newErrors.customerName = language === 'ku' ? 'تکایە ناوی تەواوت بنووسە' : language === 'en' ? 'Please enter your name' : 'الرجاء إدخال الاسم الكامل';
     }
 
     if (!formData.customerPhone.trim()) {
-      newErrors.customerPhone = 'الرجاء إدخال رقم الهاتف';
+      newErrors.customerPhone = language === 'ku' ? 'تکایە ژمارەی مۆبایل بنووسە' : language === 'en' ? 'Please enter phone number' : 'الرجاء إدخال رقم الهاتف';
     } else if (!validateIraqiPhone(formData.customerPhone)) {
-      newErrors.customerPhone = 'رقم الهاتف غير صحيح. يجب أن يكون 10 أرقام تبدأ بـ 7';
+      newErrors.customerPhone = language === 'ku' ? 'ژمارەی مۆبایلەکە ڕاست نییە. دەبێت ١٠ ژمارە بێت و بە ٧ دەستپێبکات' : language === 'en' ? 'Invalid phone number. Must be 10 digits starting with 7' : 'رقم الهاتف غير صحيح. يجب أن يكون 10 أرقام تبدأ بـ 7';
     }
 
     if (!formData.customerAddress.trim()) {
-      newErrors.customerAddress = 'الرجاء إدخال العنوان بالتفصيل';
+      newErrors.customerAddress = language === 'ku' ? 'تکایە ناونیشان بنووسە بە وردی' : language === 'en' ? 'Please enter detailed address' : 'الرجاء إدخال العنوان بالتفصيل';
     }
 
     if (!formData.customerCity.trim()) {
-      newErrors.customerCity = 'الرجاء إدخال المدينة';
+      newErrors.customerCity = language === 'ku' ? 'تکایە شار / پارێزگا بنووسە' : language === 'en' ? 'Please enter city' : 'الرجاء إدخال المدينة / المحافظة';
     }
 
     setErrors(newErrors);
@@ -160,7 +167,10 @@ const Checkout: React.FC = () => {
       }
     }
 
-    const result = await placeOrder(formData, rolledPrize?.nameAr);
+    // Pass nameAr and nameKu (fallback name) to database
+    const prizeNameAr = rolledPrize ? (rolledPrize.nameAr || rolledPrize.name) : undefined;
+    const prizeNameKu = rolledPrize ? (rolledPrize.nameKu || rolledPrize.name) : undefined;
+    const result = await placeOrder(formData, prizeNameAr, prizeNameKu);
 
     if (result.success && result.order) {
       setOrderId(result.order.id.slice(-6).toUpperCase());
@@ -172,7 +182,7 @@ const Checkout: React.FC = () => {
         setOrderSuccess(true);
       }
     } else {
-      alert(result.error || 'حدث خطأ، يرجى المحاولة مرة أخرى');
+      alert(result.error || (language === 'ku' ? 'کێشەیەک هەیە، تکایە دووبارە تاقیکەرەوە.' : language === 'en' ? 'Something went wrong, please try again.' : 'حدث خطأ ما، يرجى المحاولة مرة أخرى.'));
     }
 
     setIsSubmitting(false);
@@ -181,13 +191,16 @@ const Checkout: React.FC = () => {
   // Success Screen
   if (orderSuccess) {
     return (
-      <div className="min-h-screen bg-[#070b11] text-dorada-cream" dir="rtl">
+      <div className="min-h-screen bg-[#070b11] text-dorada-cream" dir={dir}>
         <nav className="fixed top-0 left-0 right-0 z-50 bg-[#070b11] border-b border-white/10 py-4 shadow-md">
           <div className="w-full px-4 lg:px-8 relative h-12 flex items-center justify-between">
             <button onClick={() => navigate('/')} className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-2">
-              <img src="/doradaicon.svg" alt="دورادا" className="w-8 h-8 text-dorada-gold object-contain" />
-              <span className="font-serif text-lg font-bold gold-text">دورادا</span>
+              <img src="/doradaicon.svg" alt={t('brand_name')} className="w-8 h-8 text-dorada-gold object-contain" />
+              <span className="font-serif text-lg font-bold gold-text">{t('brand_name')}</span>
             </button>
+            <div className="flex items-center justify-end z-10 w-full">
+              <LanguageSwitcher />
+            </div>
           </div>
         </nav>
 
@@ -197,39 +210,39 @@ const Checkout: React.FC = () => {
               <Check className="w-12 h-12 text-green-400" />
             </div>
             <h2 className="font-serif text-3xl font-bold text-dorada-cream mb-4">
-              تم إرسال طلبك بنجاح!
+              {t('checkout_success_title')}
             </h2>
             <p className="text-dorada-cream/60 mb-2">
-              رقم الطلب: <span className="font-mono text-dorada-gold">#{orderId}</span>
+              {t('checkout_success_ref')} <span className="font-mono text-dorada-gold">#{orderId}</span>
             </p>
             {winningPrize && (
               <div className="my-6 p-4 rounded-xl bg-dorada-gold/10 border border-dorada-gold/25 max-w-xs mx-auto flex flex-col items-center gap-3">
                 {winningPrize.imageUrl && (
                   <div className="w-20 h-20 rounded-xl overflow-hidden border border-dorada-gold/20 flex-shrink-0 bg-[#070b11]">
-                    <img src={winningPrize.imageUrl} alt={winningPrize.nameAr} className="w-full h-full object-cover" />
+                    <img src={winningPrize.imageUrl} alt={getLocalized(winningPrize, 'name')} className="w-full h-full object-cover" />
                   </div>
                 )}
                 <div className="text-center">
-                  <span className="text-xs text-dorada-cream/50 block mb-1">الهدية المرفقة مع الطلب:</span>
-                  <span className="text-dorada-gold font-bold text-lg">{winningPrize.nameAr}</span>
+                  <span className="text-xs text-dorada-cream/50 block mb-1">{t('checkout_success_prize')}</span>
+                  <span className="text-dorada-gold font-bold text-lg">{getLocalized(winningPrize, 'name')}</span>
                 </div>
               </div>
             )}
             <p className="text-dorada-cream/60 mb-8">
-              سنتواصل معك قريباً لتأكيد الطلب وترتيب التوصيل
+              {t('checkout_success_desc')}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button
                 onClick={() => navigate('/shop')}
                 className="gold-btn"
               >
-                مواصلة التسوق
+                {t('checkout_continue_shopping')}
               </button>
               <button
                 onClick={() => navigate('/')}
                 className="px-6 py-3 rounded-full border border-white/20 text-dorada-cream hover:bg-white/5 transition-all"
               >
-                العودة للرئيسية
+                {t('checkout_go_home')}
               </button>
             </div>
           </div>
@@ -239,7 +252,7 @@ const Checkout: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#070b11] text-dorada-cream" dir="rtl">
+    <div className="min-h-screen bg-[#070b11] text-dorada-cream" dir={dir}>
       {/* Navbar */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-[#070b11] border-b border-white/10 py-4 shadow-md">
         <div className="w-full px-4 lg:px-8 relative">
@@ -248,19 +261,23 @@ const Checkout: React.FC = () => {
               onClick={() => navigate('/cart')}
               className="flex items-center gap-2 text-dorada-cream/60 hover:text-dorada-gold transition-colors z-10"
             >
-              <ChevronLeft className="w-5 h-5" />
-              <span className="text-sm">العودة للسلة</span>
+              {dir === 'rtl' ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
+              <span className="text-sm">
+                {language === 'ar' ? 'العودة للسلة' : language === 'ku' ? 'گەڕانەوە بۆ سەبەتە' : 'Back to Cart'}
+              </span>
             </button>
 
             <button 
               onClick={() => navigate('/')} 
               className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-2"
             >
-              <img src="/doradaicon.svg" alt="دورادا" className="w-8 h-8 text-dorada-gold object-contain" />
-              <span className="font-serif text-lg font-bold gold-text">دورادا</span>
+              <img src="/doradaicon.svg" alt={t('brand_name')} className="w-8 h-8 text-dorada-gold object-contain" />
+              <span className="font-serif text-lg font-bold gold-text">{t('brand_name')}</span>
             </button>
 
-            <div className="w-10 z-10" />
+            <div className="z-10 flex items-center justify-end">
+              <LanguageSwitcher />
+            </div>
           </div>
         </div>
       </nav>
@@ -269,7 +286,7 @@ const Checkout: React.FC = () => {
       <main className="pt-24 pb-20 px-4 lg:px-8">
         <div className="max-w-4xl mx-auto">
           <h1 className="font-serif text-3xl font-bold text-dorada-cream mb-8 text-center">
-            إتمام الطلب
+            {t('cart_checkout')}
           </h1>
 
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
@@ -279,16 +296,16 @@ const Checkout: React.FC = () => {
                 {/* Name */}
                 <div>
                   <label className="block text-sm text-dorada-cream/80 mb-2">
-                    اسم المستلم <span className="text-red-400">*</span>
+                    {t('checkout_full_name')} <span className="text-red-400">*</span>
                   </label>
                   <div className="relative">
-                    <User className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-dorada-cream/40" />
+                    <User className={`absolute ${dir === 'rtl' ? 'right-4' : 'left-4'} top-1/2 -translate-y-1/2 w-5 h-5 text-dorada-cream/40`} />
                     <input
                       type="text"
                       value={formData.customerName}
                       onChange={(e) => setFormData({ ...formData, customerName: e.target.value })}
-                      placeholder="أدخل اسمك الكامل"
-                      className={`w-full pr-12 pl-4 py-3 rounded-xl bg-white/5 border text-dorada-cream placeholder-dorada-cream/30 focus:border-dorada-gold focus:outline-none transition-colors ${errors.customerName ? 'border-red-500/50' : 'border-white/10'
+                      placeholder={language === 'ku' ? 'ناوی تەواوت بنووسە' : language === 'en' ? 'Enter your full name' : 'أدخل اسمك الكامل'}
+                      className={`w-full ${dir === 'rtl' ? 'pr-12 pl-4' : 'pl-12 pr-4'} py-3 rounded-xl bg-white/5 border text-dorada-cream placeholder-dorada-cream/30 focus:border-dorada-gold focus:outline-none transition-colors ${errors.customerName ? 'border-red-500/50' : 'border-white/10'
                         }`}
                     />
                   </div>
@@ -303,12 +320,16 @@ const Checkout: React.FC = () => {
                 {/* Phone - Iraqi Format */}
                 <div>
                   <label className="block text-sm text-dorada-cream/80 mb-2">
-                    رقم الهاتف <span className="text-red-400">*</span>
+                    {t('checkout_phone')} <span className="text-red-400">*</span>
                   </label>
-                  <div className="relative flex">
+                  <div className={`relative flex ${dir === 'rtl' ? 'flex-row' : 'flex-row-reverse'}`}>
                     {/* Country Code */}
-                    <div className="flex items-center px-4 py-3 rounded-r-xl bg-dorada-gold/20 border border-l-0 border-white/10 text-dorada-gold font-medium">
-                      <Phone className="w-4 h-4 ml-2" />
+                    <div className={`flex items-center px-4 py-3 bg-dorada-gold/20 border border-white/10 text-dorada-gold font-medium ${
+                      dir === 'rtl' 
+                        ? 'rounded-r-xl border-l-0' 
+                        : 'rounded-l-xl border-r-0'
+                    }`}>
+                      <Phone className={`w-4 h-4 ${dir === 'rtl' ? 'ml-2' : 'mr-2'}`} />
                       +964
                     </div>
                     {/* Phone Input */}
@@ -322,12 +343,15 @@ const Checkout: React.FC = () => {
                       }}
                       placeholder="770 123 4567"
                       maxLength={10}
-                      className={`flex-1 pr-4 pl-4 py-3 rounded-l-xl bg-white/5 border text-dorada-cream placeholder-dorada-cream/30 focus:border-dorada-gold focus:outline-none transition-colors ${errors.customerPhone ? 'border-red-500/50' : 'border-white/10'
-                        }`}
+                      className={`flex-1 pr-4 pl-4 py-3 bg-white/5 border text-dorada-cream placeholder-dorada-cream/30 focus:border-dorada-gold focus:outline-none transition-colors ${
+                        dir === 'rtl' 
+                          ? 'rounded-l-xl' 
+                          : 'rounded-r-xl'
+                      } ${errors.customerPhone ? 'border-red-500/50' : 'border-white/10'}`}
                     />
                   </div>
                   <p className="mt-2 text-xs text-dorada-cream/40">
-                    أدخل الرقم بدون الصفر في البداية. مثال: 7701234567
+                    {t('checkout_phone_hint')}
                   </p>
                   {errors.customerPhone && (
                     <p className="mt-2 text-sm text-red-400 flex items-center gap-1">
@@ -340,16 +364,16 @@ const Checkout: React.FC = () => {
                 {/* City */}
                 <div>
                   <label className="block text-sm text-dorada-cream/80 mb-2">
-                    المدينة <span className="text-red-400">*</span>
+                    {t('checkout_city')} <span className="text-red-400">*</span>
                   </label>
                   <div className="relative">
-                    <Building className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-dorada-cream/40" />
+                    <Building className={`absolute ${dir === 'rtl' ? 'right-4' : 'left-4'} top-1/2 -translate-y-1/2 w-5 h-5 text-dorada-cream/40`} />
                     <input
                       type="text"
                       value={formData.customerCity}
                       onChange={(e) => setFormData({ ...formData, customerCity: e.target.value })}
-                      placeholder="مثال: بغداد، أربيل، البصرة..."
-                      className={`w-full pr-12 pl-4 py-3 rounded-xl bg-white/5 border text-dorada-cream placeholder-dorada-cream/30 focus:border-dorada-gold focus:outline-none transition-colors ${errors.customerCity ? 'border-red-500/50' : 'border-white/10'
+                      placeholder={language === 'ku' ? 'نموونە: هەولێر، سلێمانی، دهۆک...' : language === 'en' ? 'Example: Erbil, Sulaymaniyah, Baghdad...' : 'مثال: بغداد، أربيل، البصرة...'}
+                      className={`w-full ${dir === 'rtl' ? 'pr-12 pl-4' : 'pl-12 pr-4'} py-3 rounded-xl bg-white/5 border text-dorada-cream placeholder-dorada-cream/30 focus:border-dorada-gold focus:outline-none transition-colors ${errors.customerCity ? 'border-red-500/50' : 'border-white/10'
                         }`}
                     />
                   </div>
@@ -364,16 +388,16 @@ const Checkout: React.FC = () => {
                 {/* Address */}
                 <div>
                   <label className="block text-sm text-dorada-cream/80 mb-2">
-                    العنوان بالتفصيل <span className="text-red-400">*</span>
+                    {t('checkout_address')} <span className="text-red-400">*</span>
                   </label>
                   <div className="relative">
-                    <MapPin className="absolute right-4 top-4 w-5 h-5 text-dorada-cream/40" />
+                    <MapPin className={`absolute ${dir === 'rtl' ? 'right-4' : 'left-4'} top-4 w-5 h-5 text-dorada-cream/40`} />
                     <textarea
                       value={formData.customerAddress}
                       onChange={(e) => setFormData({ ...formData, customerAddress: e.target.value })}
-                      placeholder="المنطقة، الحي، أقرب نقطة دالة، رقم المنزل..."
+                      placeholder={language === 'ku' ? 'گەڕەک، شەقام، نزیکترین شوێنی دیار، ژمارەی خانوو...' : language === 'en' ? 'Neighborhood, Street, Landmark, House number...' : 'المنطقة، الحي، أقرب نقطة دالة، رقم المنزل...'}
                       rows={4}
-                      className={`w-full pr-12 pl-4 py-3 rounded-xl bg-white/5 border text-dorada-cream placeholder-dorada-cream/30 focus:border-dorada-gold focus:outline-none transition-colors resize-none ${errors.customerAddress ? 'border-red-500/50' : 'border-white/10'
+                      className={`w-full ${dir === 'rtl' ? 'pr-12 pl-4' : 'pl-12 pr-4'} py-3 rounded-xl bg-white/5 border text-dorada-cream placeholder-dorada-cream/30 focus:border-dorada-gold focus:outline-none transition-colors resize-none ${errors.customerAddress ? 'border-red-500/50' : 'border-white/10'
                         }`}
                     />
                   </div>
@@ -394,11 +418,11 @@ const Checkout: React.FC = () => {
                   {isSubmitting ? (
                     <>
                       <Loader2 className="w-5 h-5 animate-spin" />
-                      <span>جاري إرسال الطلب...</span>
+                      <span>{t('checkout_submitting')}</span>
                     </>
                   ) : (
                     <>
-                      <span>تأكيد الطلب</span>
+                      <span>{t('checkout_place_order')}</span>
                       <Check className="w-5 h-5" />
                     </>
                   )}
@@ -410,23 +434,23 @@ const Checkout: React.FC = () => {
             <div className="lg:col-span-2">
               <div className="bg-[#121c2c] border border-white/10 p-6 rounded-2xl sticky top-24">
                 <h2 className="font-serif text-xl font-bold text-dorada-cream mb-6">
-                  ملخص الطلب
+                  {language === 'ku' ? 'پوختەی داواکاری' : language === 'en' ? 'Order Summary' : 'ملخص الطلب'}
                 </h2>
 
                 {/* Items */}
-                <div className="space-y-4 mb-6 max-h-[50vh] overflow-y-auto pr-1">
+                <div className={`space-y-4 mb-6 max-h-[50vh] overflow-y-auto ${dir === 'rtl' ? 'pr-1' : 'pl-1'}`}>
                   {cart.items.map((item) => (
                     <div key={item.product.id} className="border-b border-white/5 pb-4 last:border-0 last:pb-0">
                       <div className="flex gap-3">
                         <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
                           <img
                             src={item.product.images[0]}
-                            alt={item.product.nameAr}
+                            alt={getLocalized(item.product, 'name')}
                             className="w-full h-full object-cover"
                           />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h4 className="text-sm text-dorada-cream truncate">{item.product.nameAr}</h4>
+                          <h4 className="text-sm text-dorada-cream truncate">{getLocalized(item.product, 'name')}</h4>
                           <p className="text-xs text-dorada-cream/50 mt-0.5">
                             {formatPrice(item.product.price)} × {item.quantity}
                           </p>
@@ -443,25 +467,25 @@ const Checkout: React.FC = () => {
 
                 <div className="border-t border-white/10 pt-4 space-y-2">
                   <div className="flex justify-between text-dorada-cream/60 text-sm">
-                    <span>المجموع الفرعي</span>
+                    <span>{t('cart_subtotal')}</span>
                     <span>{formatPrice(cart.total)}</span>
                   </div>
                   <div className="flex justify-between text-dorada-cream/60 text-sm">
-                    <span>الشحن</span>
+                    <span>{t('cart_shipping')}</span>
                     <span className="text-dorada-cream">{formatPrice(5000)}</span>
                   </div>
                 </div>
 
                 <div className="border-t border-white/10 mt-4 pt-4">
                   <div className="flex justify-between items-center">
-                    <span className="text-lg text-dorada-cream font-medium">المجموع الكلي</span>
+                    <span className="text-lg text-dorada-cream font-medium">{t('cart_total')}</span>
                     <span className="text-2xl font-bold gold-text">{formatPrice(cart.total + 5000)}</span>
                   </div>
                 </div>
 
                 <div className="mt-6 p-4 rounded-xl bg-[#070b11] border border-white/5">
                   <p className="text-sm text-dorada-cream/60 text-center">
-                    الدفع عند الاستلام
+                    {t('checkout_cod_desc')}
                   </p>
                 </div>
               </div>

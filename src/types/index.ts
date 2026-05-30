@@ -3,13 +3,16 @@ export interface Product {
   id: string;
   name: string;
   nameAr: string;
+  nameKu?: string;
   description: string;
   descriptionAr: string;
+  descriptionKu?: string;
   price: number;
   originalPrice?: number;
   images: string[];
   category: string;
   categoryAr: string;
+  categoryKu?: string;
   inStock: boolean;
   featured: boolean;
   quantity: number;
@@ -38,6 +41,7 @@ export interface Category {
   id: string;
   name: string;
   nameAr: string;
+  nameKu?: string;
   icon?: string;
 }
 
@@ -85,6 +89,7 @@ export interface OrderItem {
   productId: string;
   name: string;
   nameAr: string;
+  nameKu?: string;
   price: number;
   quantity: number;
   image: string;
@@ -101,10 +106,12 @@ export interface Order {
   total: number;
   status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
   statusAr: string;
+  statusKu?: string;
   createdAt: string;
   updatedAt: string;
   telegramMessageId?: number;
   wonPrize?: string;
+  wonPrizeKu?: string;
 }
 
 // Telegram Bot Config
@@ -146,6 +153,7 @@ export interface Prize {
   id: string;
   name: string;
   nameAr: string;
+  nameKu?: string;
   chance: number; // percentage (e.g. 10 for 10%)
   imageUrl?: string;
 }

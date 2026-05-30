@@ -17,6 +17,8 @@ import {
 import { motion, AnimatePresence, useInView } from 'framer-motion';
 
 import { useApp } from '@/contexts/AppContext';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import QuickViewModal from '@/components/QuickViewModal';
 import RecentlyViewed from '@/components/RecentlyViewed';
 import { ProductSkeleton } from '@/components/ProductSkeleton';
@@ -125,6 +127,7 @@ const AutoScrollRow: React.FC<{
   isInWishlist: (productId: string) => boolean;
   formatPrice: (price: number) => string;
 }> = ({ products, direction, onProductClick, onAddToCart, onAddToWishlist, onQuickView, isInWishlist, formatPrice }) => {
+  const { dir } = useLanguage();
   
   // Shuffle products on mount and limit to max 15 random items to keep DOM light
   const shuffledProducts = React.useMemo(() => {
@@ -260,7 +263,7 @@ const AutoScrollRow: React.FC<{
       {/* Track 1 */}
       <div className="flex gap-4 min-w-max pr-4">
         {trackItems.map((product, index) => (
-          <div key={`${product.id}-t1-${index}`} className="w-52 sm:w-64 flex-shrink-0" dir="rtl">
+          <div key={`${product.id}-t1-${index}`} className="w-52 sm:w-64 flex-shrink-0" dir={dir}>
             <ProductCard
               product={product}
               onAddToCart={onAddToCart}
@@ -277,7 +280,7 @@ const AutoScrollRow: React.FC<{
       {/* Track 2 */}
       <div className="flex gap-4 min-w-max pr-4" aria-hidden="true">
         {trackItems.map((product, index) => (
-          <div key={`${product.id}-t2-${index}`} className="w-52 sm:w-64 flex-shrink-0" dir="rtl">
+          <div key={`${product.id}-t2-${index}`} className="w-52 sm:w-64 flex-shrink-0" dir={dir}>
             <ProductCard
               product={product}
               onAddToCart={onAddToCart}
@@ -297,6 +300,7 @@ const AutoScrollRow: React.FC<{
 const Shop: React.FC = () => {
   const navigate = useNavigate();
   const { cartItemsCount, addToCart, formatPrice, addToWishlistFn, isInWishlistFn, wishlistItemsCount } = useApp();
+  const { language, t, dir, getLocalized } = useLanguage();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -381,6 +385,7 @@ const Shop: React.FC = () => {
   }, [dbReviews.length]);
 
   const filteredProducts = products.filter(p =>
+    getLocalized(p, 'name').toLowerCase().includes(searchQuery.toLowerCase()) ||
     p.nameAr.toLowerCase().includes(searchQuery.toLowerCase()) ||
     p.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -444,7 +449,7 @@ const Shop: React.FC = () => {
   const isBrowsingAll = selectedCategory !== null || searchQuery !== '';
 
   return (
-    <div className="min-h-screen bg-[#070b11] text-dorada-cream relative overflow-x-hidden font-sans" dir="rtl">
+    <div className="min-h-screen bg-[#070b11] text-dorada-cream relative overflow-x-hidden font-sans" dir={dir}>
       
       {/* Premium Solid Navbar */}
       <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
@@ -454,13 +459,13 @@ const Shop: React.FC = () => {
           <div className="flex items-center justify-between">
             {/* Logo */}
             <button onClick={handleResetFilters} className="flex items-center gap-2 group">
-              <img src="/doradaicon.svg" alt="دورادا" className="w-9 h-9 text-dorada-gold transition-transform group-hover:scale-105 object-contain" />
-              <span className="font-serif text-xl sm:text-2xl font-bold gold-text tracking-wide">دورادا</span>
+              <img src="/doradaicon.svg" alt={t('brand_name')} className="w-9 h-9 text-dorada-gold transition-transform group-hover:scale-105 object-contain" />
+              <span className="font-serif text-xl sm:text-2xl font-bold gold-text tracking-wide">{t('brand_name')}</span>
             </button>
 
             {/* Desktop Navigation Links */}
             <div className="hidden md:flex items-center gap-8 text-sm">
-              <button onClick={handleResetFilters} className={`transition-colors ${!isBrowsingAll ? 'text-dorada-gold font-medium' : 'text-dorada-cream/70 hover:text-dorada-gold'}`}>الرئيسية</button>
+              <button onClick={handleResetFilters} className={`transition-colors ${!isBrowsingAll ? 'text-dorada-gold font-medium' : 'text-dorada-cream/70 hover:text-dorada-gold'}`}>{t('nav_home')}</button>
               {categories.slice(0, 5).map(cat => (
                 <button
                   key={cat.id}
@@ -470,13 +475,14 @@ const Shop: React.FC = () => {
                   }}
                   className={`transition-colors ${selectedCategory === cat.name ? 'text-dorada-gold font-medium' : 'text-dorada-cream/70 hover:text-dorada-gold'}`}
                 >
-                  {cat.nameAr}
+                  {getLocalized(cat, 'name')}
                 </button>
               ))}
             </div>
 
             {/* Actions */}
             <div className="flex items-center gap-3">
+              <LanguageSwitcher />
               {/* Wishlist */}
               <button
                 onClick={() => navigate('/wishlist')}
@@ -515,18 +521,18 @@ const Shop: React.FC = () => {
           {/* Search bar inside header */}
           <div className="max-w-md mx-auto mt-3">
             <div className="relative">
-              <Search className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-dorada-cream/40" />
+              <Search className="absolute start-4 top-1/2 -translate-y-1/2 w-4 h-4 text-dorada-cream/40" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="البحث عن منتج..."
-                className="w-full pr-11 pl-4 py-2 rounded-full bg-[#121c2c] border border-white/10 text-dorada-cream placeholder-dorada-cream/35 focus:border-dorada-gold focus:outline-none text-xs transition-colors"
+                placeholder={t('search_placeholder')}
+                className="w-full ps-11 pe-4 py-2 rounded-full bg-[#121c2c] border border-white/10 text-dorada-cream placeholder-dorada-cream/35 focus:border-dorada-gold focus:outline-none text-xs transition-colors"
               />
               {searchQuery && (
                 <button 
                   onClick={() => setSearchQuery('')}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 p-1 rounded-full text-dorada-cream/40 hover:text-dorada-cream"
+                  className="absolute end-4 top-1/2 -translate-y-1/2 p-1 rounded-full text-dorada-cream/40 hover:text-dorada-cream"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
@@ -548,17 +554,19 @@ const Shop: React.FC = () => {
               className="fixed inset-0 z-50 bg-black/80"
             />
             <motion.div
-              initial={{ x: '100%' }}
+              initial={{ x: dir === 'rtl' ? '100%' : '-100%' }}
               animate={{ x: 0 }}
-              exit={{ x: '100%' }}
+              exit={{ x: dir === 'rtl' ? '100%' : '-100%' }}
               transition={{ type: 'tween', duration: 0.3 }}
-              className="fixed top-0 bottom-0 left-0 right-12 z-50 bg-[#070b11] border-r border-white/10 p-6 flex flex-col justify-between"
+              className={`fixed top-0 bottom-0 z-50 bg-[#070b11] p-6 flex flex-col justify-between ${
+                dir === 'rtl' ? 'right-0 left-12 border-l border-white/10' : 'left-0 right-12 border-r border-white/10'
+              }`}
             >
               <div>
                 <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-6">
                   <div className="flex items-center gap-2">
                     <img src="/doradaicon.svg" alt="Logo" className="w-8 h-8" />
-                    <span className="font-serif text-lg font-bold gold-text">دورادا</span>
+                    <span className="font-serif text-lg font-bold gold-text">{t('brand_name')}</span>
                   </div>
                   <button
                     onClick={() => setIsMobileMenuOpen(false)}
@@ -574,9 +582,9 @@ const Shop: React.FC = () => {
                       handleResetFilters();
                       setIsMobileMenuOpen(false);
                     }}
-                    className="text-right py-2 text-dorada-cream/80 hover:text-dorada-gold border-b border-white/5 font-medium"
+                    className="text-start py-2 text-dorada-cream/80 hover:text-dorada-gold border-b border-white/5 font-medium"
                   >
-                    الرئيسية
+                    {t('nav_home')}
                   </button>
                   {categories.map(cat => (
                     <button
@@ -586,16 +594,16 @@ const Shop: React.FC = () => {
                         setSearchQuery('');
                         setIsMobileMenuOpen(false);
                       }}
-                      className="text-right py-2 text-dorada-cream/80 hover:text-dorada-gold border-b border-white/5 font-medium"
+                      className="text-start py-2 text-dorada-cream/80 hover:text-dorada-gold border-b border-white/5 font-medium"
                     >
-                      {cat.nameAr}
+                      {getLocalized(cat, 'name')}
                     </button>
                   ))}
                 </div>
               </div>
 
               <div className="border-t border-white/10 pt-6">
-                <p className="text-xs text-dorada-cream/40 text-center mb-4">تواصل معنا</p>
+                <p className="text-xs text-dorada-cream/40 text-center mb-4">{t('nav_contact')}</p>
                 <div className="flex justify-center gap-4">
                   <a href="https://instagram.com/dorada_accessories" target="_blank" rel="noreferrer" className="p-2.5 rounded-full bg-[#121c2c] text-dorada-gold">
                     <Instagram className="w-5 h-5" />
@@ -639,16 +647,16 @@ const Shop: React.FC = () => {
                 transition={{ duration: 0.6, delay: 0.1 }}
                 className="inline-block px-4 py-1 rounded-full border border-dorada-gold/30 text-[10px] sm:text-xs font-semibold text-dorada-gold tracking-widest uppercase mb-6 bg-black/40"
               >
-                اكسسوارات دورادا الجميلة
+                {t('brand_name')} - {t('tagline')}
               </motion.span>
 
               <motion.h1
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.3 }}
-                className="font-serif text-4xl sm:text-6xl md:text-7xl font-bold text-dorada-cream mb-6 tracking-wide leading-tight"
+                className="font-serif text-3xl sm:text-5xl md:text-6xl font-bold text-dorada-cream mb-6 tracking-wide leading-tight"
               >
-                اكسسوارات <span className="gold-text">نازكة</span> وفخمة
+                {t('hero_title')}
               </motion.h1>
 
               <motion.p
@@ -657,7 +665,7 @@ const Shop: React.FC = () => {
                 transition={{ duration: 0.8, delay: 0.5 }}
                 className="text-dorada-cream/80 max-w-xl text-sm sm:text-base md:text-lg mb-8 leading-relaxed font-light"
               >
-                استكشفي اكسسوارتنا المختارة بعناية التي تليق بجمالك ونعومتك.
+                {t('tagline')}
               </motion.p>
 
               <motion.div
@@ -673,15 +681,15 @@ const Shop: React.FC = () => {
                   }}
                   className="gold-btn py-2.5 sm:py-3 px-6 sm:px-8 text-xs sm:text-sm flex items-center gap-2 group border border-transparent"
                 >
-                  <span>استكشاف التشكيلة</span>
-                  <ChevronLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+                  <span>{t('explore_collection')}</span>
+                  <ChevronLeft className={`w-4 h-4 transition-transform ${dir === 'rtl' ? 'group-hover:-translate-x-1' : 'group-hover:translate-x-1 rotate-180'}`} />
                 </button>
               </motion.div>
             </div>
 
             {/* Bottom scroll hint */}
             <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center">
-              <span className="text-[10px] text-dorada-cream/40 uppercase tracking-widest mb-2">اسحب للأسفل</span>
+              <span className="text-[10px] text-dorada-cream/40 uppercase tracking-widest mb-2">{t('scroll_down')}</span>
               <div className="w-[1px] h-8 bg-dorada-gold/30 animate-pulse" />
             </div>
           </section>
@@ -692,10 +700,10 @@ const Shop: React.FC = () => {
               <ScrollReveal>
                 <div className="text-center mb-10">
                   <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold text-dorada-cream mb-3">
-                    شنو تريدين تتسوقين ؟
+                    {t('category_title')}
                   </h2>
                   <p className="text-xs sm:text-sm text-dorada-cream/50 max-w-md mx-auto">
-                    اختاري الموديل المفضل لديكي وتصفح  اكسسوارات الفريدة المختارة خصيصاً لكي.
+                    {t('category_subtitle')}
                   </p>
                 </div>
               </ScrollReveal>
@@ -732,17 +740,17 @@ const Shop: React.FC = () => {
                     {/* Glowing gold animation */}
                     <div className="absolute -inset-y-2 -inset-x-20 bg-gradient-to-r from-transparent via-dorada-gold/5 to-transparent skew-x-12 translate-x-[-100%] group-hover:translate-x-[200%] transition-transform duration-1000 ease-out pointer-events-none" />
 
-                    <div className="flex items-center gap-4 relative z-10 text-right justify-between flex-col sm:flex-row" dir="rtl">
+                    <div className="flex items-center gap-4 relative z-10 text-start justify-between flex-col sm:flex-row" dir={dir}>
                       <div className="flex items-center gap-3.5">
                         <div className="p-3 rounded-full bg-dorada-gold/15 text-dorada-gold flex-shrink-0 animate-bounce shadow-[0_0_15px_rgba(212,175,55,0.2)]">
                           <Gift className="w-5 h-5" />
                         </div>
                         <div>
                           <h4 className="font-serif text-sm sm:text-base font-bold text-dorada-cream">
-                            صناديق الهدايا الفاخرة للقطع المميزة!
+                            {t('gift_title_waiting')}
                           </h4>
                           <p className="text-[11px] sm:text-xs text-dorada-cream/60 mt-1 leading-relaxed">
-                            تسوقي من <span className="text-dorada-gold font-semibold">"القطع المميزة"</span> واحصلي على فرصة لفتح صندوق هدايا مخملي وربح جوائز فورية وهدايا قيمة عند إتمام الطلب!
+                            {t('gift_banner_text')}
                           </p>
                         </div>
                       </div>
@@ -754,7 +762,7 @@ const Shop: React.FC = () => {
                         }}
                         className="text-[10px] sm:text-xs font-semibold px-4 py-2 rounded-lg bg-dorada-gold text-[#070b11] hover:bg-dorada-gold-light transition-all flex-shrink-0"
                       >
-                        استعراض القطع المميزة ←
+                        {t('gift_banner_link')} {dir === 'rtl' ? '←' : '→'}
                       </button>
                     </div>
                   </div>
@@ -769,13 +777,13 @@ const Shop: React.FC = () => {
                     <div className="absolute top-0 right-0 w-72 h-72 bg-dorada-gold/5 rounded-full filter blur-[80px] pointer-events-none" />
                     
                     {/* Header */}
-                    <div className="flex items-center justify-between mb-6 px-4 border-r-2 border-dorada-gold pr-3 relative z-10">
+                    <div className="flex items-center justify-between mb-6 px-4 border-s-2 border-dorada-gold ps-3 relative z-10">
                       <div className="flex items-center gap-2">
-                        <h3 id="shop-featured-heading" className="font-serif text-xl sm:text-2xl font-bold gold-text">القطع المميزة</h3>
+                        <h3 id="shop-featured-heading" className="font-serif text-xl sm:text-2xl font-bold gold-text">{t('featured_title')}</h3>
                         <span className="animate-pulse flex h-2 w-2 rounded-full bg-dorada-gold shadow-[0_0_10px_#D4AF37]" />
                       </div>
                       <span className="text-[10px] sm:text-xs text-dorada-gold/80 bg-dorada-gold/10 px-3 py-1 rounded-full font-medium tracking-wide border border-dorada-gold/20">
-                        مختاراتنا الفاخرة لكم
+                        {t('featured_sub')}
                       </span>
                     </div>
 
@@ -803,10 +811,10 @@ const Shop: React.FC = () => {
                   <ScrollReveal key={cat.id}>
                     <div className="mb-16 sm:mb-20">
                       {/* Section Header */}
-                      <div className="flex items-center justify-between mb-6 px-4 lg:px-8 border-r-2 border-dorada-gold pr-3">
+                      <div className="flex items-center justify-between mb-6 px-4 lg:px-8 border-s-2 border-dorada-gold ps-3">
                         <div>
                           <h3 className="font-serif text-xl sm:text-2xl font-bold text-dorada-cream">
-                            {cat.nameAr}
+                            {getLocalized(cat, 'name')}
                           </h3>
                         </div>
                         <button
@@ -816,7 +824,7 @@ const Shop: React.FC = () => {
                           }}
                           className="text-[11px] sm:text-xs text-dorada-gold hover:text-dorada-gold-light flex items-center gap-1 transition-colors font-medium"
                         >
-                          عرض الكل ({catProducts.length}) ←
+                          {t('view_all')} ({catProducts.length}) {dir === 'rtl' ? '←' : '→'}
                         </button>
                       </div>
 
@@ -844,13 +852,13 @@ const Shop: React.FC = () => {
                     <div className="absolute bottom-0 left-0 w-72 h-72 bg-dorada-gold/5 rounded-full filter blur-[80px] pointer-events-none" />
                     
                     {/* Header */}
-                    <div className="flex items-center justify-between mb-6 px-4 border-r-2 border-dorada-gold pr-3 relative z-10">
+                    <div className="flex items-center justify-between mb-6 px-4 border-s-2 border-dorada-gold ps-3 relative z-10">
                       <div className="flex items-center gap-2">
-                        <h3 className="font-serif text-xl sm:text-2xl font-bold gold-text">الأكثر مبيعاً وطلباً</h3>
+                        <h3 className="font-serif text-xl sm:text-2xl font-bold gold-text">{t('best_sellers_title')}</h3>
                         <span className="animate-pulse flex h-2 w-2 rounded-full bg-dorada-gold shadow-[0_0_10px_#D4AF37]" />
                       </div>
                       <span className="text-[10px] sm:text-xs text-dorada-gold/80 bg-dorada-gold/10 px-3 py-1 rounded-full font-medium tracking-wide border border-dorada-gold/20">
-                        القطع الأكثر طلباً ومحبة
+                        {t('best_sellers_sub')}
                       </span>
                     </div>
 
@@ -878,10 +886,10 @@ const Shop: React.FC = () => {
               <ScrollReveal>
                 <div className="text-center mb-10">
                   <h2 className="font-serif text-2xl sm:text-3xl font-bold text-dorada-cream mb-3">
-                    إطلالة متكاملة
+                    {t('lifestyle_title')}
                   </h2>
                   <p className="text-xs sm:text-sm text-dorada-cream/50 max-w-md mx-auto">
-                    شاهد كيف تبرق مجوهرات دورادا في صور حية وتضفي بريقاً ساحراً على أسلوبك.
+                    {t('lifestyle_sub')}
                   </p>
                 </div>
               </ScrollReveal>
@@ -908,7 +916,9 @@ const Shop: React.FC = () => {
                   ))}
                 </div>
               ) : (
-                <p className="text-center text-dorada-cream/40 text-sm">لا توجد صور متوفرة حالياً</p>
+                <p className="text-center text-dorada-cream/40 text-sm">
+                  {language === 'ar' ? 'لا توجد صور متوفرة حالياً' : language === 'ku' ? 'لەم کاتەدا هیچ وێنەیەک بەردەست نییە' : 'No photos available at the moment'}
+                </p>
               )}
             </div>
           </section>
@@ -926,7 +936,7 @@ const Shop: React.FC = () => {
 
             <div className="relative z-10 max-w-3xl mx-auto w-full px-4 flex flex-col items-center">
               <ScrollReveal>
-                <h3 className="font-serif text-2xl sm:text-3xl font-bold text-dorada-cream mb-6">آراء وتقييمات العملاء</h3>
+                <h3 className="font-serif text-2xl sm:text-3xl font-bold text-dorada-cream mb-6">{t('testimonials_title')}</h3>
                 
                 {dbReviews.length > 0 ? (
                   <div className="min-h-[160px] flex items-center justify-center mb-6">
@@ -950,14 +960,14 @@ const Shop: React.FC = () => {
                           {dbReviews[activeTestimonialIndex].name}
                         </h4>
                         <p className="text-[10px] text-dorada-cream/40">
-                          {new Date(dbReviews[activeTestimonialIndex].createdAt).toLocaleDateString('ar-EG')}
+                          {new Date(dbReviews[activeTestimonialIndex].createdAt).toLocaleDateString(language === 'ar' ? 'ar-EG' : language === 'ku' ? 'ku-IQ' : 'en-US')}
                         </p>
                       </motion.div>
                     </AnimatePresence>
                   </div>
                 ) : (
                   <div className="py-8 text-dorada-cream/40 text-sm">
-                    لا توجد تقييمات عامة للموقع بعد. كن أول من يكتب تقييماً!
+                    {language === 'ar' ? 'لا توجد تقييمات عامة للموقع بعد. كن أول من يكتب تقييماً!' : language === 'ku' ? 'هێشتا هیچ هەڵسەنگاندنێک نییە. ببە بە یەکەم کەس کە هەڵسەنگاندن بنووسێت!' : 'No reviews yet. Be the first to write a review!'}
                   </div>
                 )}
 
@@ -981,7 +991,7 @@ const Shop: React.FC = () => {
                   onClick={() => setIsReviewModalOpen(true)}
                   className="px-6 py-2.5 rounded-full border border-dorada-gold text-dorada-gold hover:bg-dorada-gold hover:text-black transition-all text-xs font-semibold"
                 >
-                  كتابة تقييم للموقع
+                  {t('product_add_review')}
                 </button>
               </ScrollReveal>
             </div>
@@ -1001,10 +1011,10 @@ const Shop: React.FC = () => {
             <div className="relative z-10 max-w-4xl mx-auto flex flex-col items-center">
               <ScrollReveal>
                 <h2 className="font-serif text-2xl sm:text-4xl font-bold text-dorada-cream mb-4 leading-tight">
-                  تريد قطعة مخصصة تناسب ذوقك؟
+                  {t('custom_piece_title')}
                 </h2>
                 <p className="text-xs sm:text-sm text-dorada-cream/70 max-w-xl mb-8 leading-relaxed">
-                  تواصلي ويانا عن طريق الواتساب واختاري القطعة الي تريديها و ما راح نقصر وياج لمساعدتج باختيار قطعتج المناسبة.
+                  {t('custom_piece_desc')}
                 </p>
                 <a
                   href="https://wa.me/9647507078397"
@@ -1013,7 +1023,7 @@ const Shop: React.FC = () => {
                   className="gold-btn py-2.5 px-6 text-xs sm:text-sm flex items-center gap-2 group border border-transparent inline-block"
                 >
                   <Phone className="w-3.5 h-3.5" />
-                  <span>تواصل معنا عبر الواتساب</span>
+                  <span>{t('whatsapp_contact')}</span>
                 </a>
               </ScrollReveal>
             </div>
@@ -1030,13 +1040,15 @@ const Shop: React.FC = () => {
                   onClick={handleResetFilters}
                   className="text-[11px] text-dorada-gold hover:underline mb-1.5 block"
                 >
-                  ← العودة للرئيسية
+                  {dir === 'rtl' ? '←' : '→'} {t('checkout_go_home')}
                 </button>
                 <h2 className="font-serif text-2xl sm:text-3xl font-bold text-dorada-cream">
-                  {selectedCategory ? categories.find(c => c.name === selectedCategory)?.nameAr : 'جميع المنتجات'}
+                  {selectedCategory ? getLocalized(categories.find(c => c.name === selectedCategory), 'name') : (language === 'ar' ? 'جميع المنتجات' : language === 'ku' ? 'هەموو بابەتەکان' : 'All Products')}
                 </h2>
                 {searchQuery && (
-                  <p className="text-xs text-dorada-cream/60 mt-0.5">نتائج البحث عن: "{searchQuery}"</p>
+                  <p className="text-xs text-dorada-cream/60 mt-0.5">
+                    {language === 'ar' ? 'نتائج البحث عن' : language === 'ku' ? 'ئەنجامی گەڕان بۆ' : 'Search results for'}: "{searchQuery}"
+                  </p>
                 )}
               </div>
 
@@ -1045,7 +1057,7 @@ const Shop: React.FC = () => {
                 onClick={handleResetFilters}
                 className="px-4 py-2 rounded-full border border-white/10 hover:border-dorada-gold text-[10px] sm:text-xs text-dorada-cream hover:text-dorada-gold transition-all"
               >
-                إلغاء التصفية
+                {t('clear_filters')}
               </button>
             </div>
 
@@ -1059,7 +1071,7 @@ const Shop: React.FC = () => {
                     : 'bg-[#121c2c] border border-white/10 text-dorada-cream hover:border-dorada-gold/50'
                 }`}
               >
-                الكل
+                {t('all_filter')}
               </button>
               {categories.map((cat) => (
                 <button
@@ -1071,7 +1083,7 @@ const Shop: React.FC = () => {
                       : 'bg-[#121c2c] border border-white/10 text-dorada-cream hover:border-dorada-gold/50'
                   }`}
                 >
-                  {cat.nameAr}
+                  {getLocalized(cat, 'name')}
                 </button>
               ))}
             </div>
@@ -1086,7 +1098,7 @@ const Shop: React.FC = () => {
             ) : filteredProducts.length === 0 ? (
               <div className="text-center py-20">
                 <ShoppingBag className="w-12 h-12 text-dorada-cream/15 mx-auto mb-4" />
-                <p className="text-sm text-dorada-cream/50">لا توجد منتجات مطابقة للتصفية حالياً</p>
+                <p className="text-sm text-dorada-cream/50">{t('no_products_found')}</p>
               </div>
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
@@ -1118,9 +1130,9 @@ const Shop: React.FC = () => {
         <div className="max-w-7xl mx-auto">
           <ScrollReveal>
             <div className="text-center mb-12">
-              <h2 className="font-serif text-2xl sm:text-3xl font-bold text-dorada-cream mb-3">للتواصل معنا</h2>
+              <h2 className="font-serif text-2xl sm:text-3xl font-bold text-dorada-cream mb-3">{t('nav_contact')}</h2>
               <p className="text-xs sm:text-sm text-dorada-cream/50 max-w-sm mx-auto">
-                نحن دائماً في خدمتك لمساعدتك في الحصول على أفضل تجربة تسوق ممكنة.
+                {language === 'ar' ? 'نحن دائماً في خدمتك لمساعدتك في الحصول على أفضل تجربة تسوق ممكنة.' : language === 'ku' ? 'ئێمە هەمیشە لە خزمەتتداین بۆ ئەوەی باشترین ئەزموونی بازاڕکردنت هەبێت.' : 'We are always at your service to help you get the best shopping experience possible.'}
               </p>
             </div>
           </ScrollReveal>
@@ -1136,7 +1148,9 @@ const Shop: React.FC = () => {
               <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center mx-auto mb-4 group-hover:scale-105 transition-transform">
                 <Instagram className="w-6 h-6 text-white" />
               </div>
-              <h3 className="font-serif text-base font-semibold text-dorada-cream mb-1.5">إنستغرام</h3>
+              <h3 className="font-serif text-base font-semibold text-dorada-cream mb-1.5">
+                {language === 'ar' ? 'إنستغرام' : language === 'ku' ? 'ئینستاگرام' : 'Instagram'}
+              </h3>
               <p className="text-dorada-gold text-xs">@dorada_accessories</p>
             </a>
 
@@ -1150,7 +1164,9 @@ const Shop: React.FC = () => {
               <div className="w-12 h-12 rounded-full bg-[#1e293b] border border-dorada-gold/20 flex items-center justify-center mx-auto mb-4 group-hover:scale-105 transition-transform">
                 <Phone className="w-6 h-6 text-dorada-gold" />
               </div>
-              <h3 className="font-serif text-base font-semibold text-dorada-cream mb-1.5">اتصل بنا</h3>
+              <h3 className="font-serif text-base font-semibold text-dorada-cream mb-1.5">
+                {language === 'ar' ? 'اتصل بنا' : language === 'ku' ? 'پەیوەندیمان پێوە بکە' : 'Call Us'}
+              </h3>
               <p className="text-dorada-cream/65 text-xs group-hover:text-dorada-gold transition-colors">07507078397</p>
             </a>
 
@@ -1159,38 +1175,42 @@ const Shop: React.FC = () => {
               <div className="w-12 h-12 rounded-full bg-[#1e293b] border border-dorada-gold/20 flex items-center justify-center mx-auto mb-4">
                 <MapPin className="w-6 h-6 text-dorada-gold" />
               </div>
-              <h3 className="font-serif text-base font-semibold text-dorada-cream mb-1.5">الموقع</h3>
-              <p className="text-dorada-cream/65 text-xs">قريباً</p>
+              <h3 className="font-serif text-base font-semibold text-dorada-cream mb-1.5">
+                {language === 'ar' ? 'الموقع' : language === 'ku' ? 'شوێن' : 'Location'}
+              </h3>
+              <p className="text-dorada-cream/65 text-xs">
+                {language === 'ar' ? 'قريباً' : language === 'ku' ? 'بەم زووانە' : 'Soon'}
+              </p>
             </div>
           </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-white/10 bg-[#070b11] py-12 px-4 lg:px-12 text-center md:text-right">
+      <footer className="border-t border-white/10 bg-[#070b11] py-12 px-4 lg:px-12 text-center md:text-start">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-8">
           <div className="flex items-center gap-3">
-            <img src="/doradaicon.svg" alt="دورادا" className="w-10 h-10 text-dorada-gold object-contain" />
+            <img src="/doradaicon.svg" alt={t('brand_name')} className="w-10 h-10 text-dorada-gold object-contain" />
             <div>
-              <span className="font-serif text-2xl font-bold gold-text block leading-none mb-1">دورادا</span>
+              <span className="font-serif text-2xl font-bold gold-text block leading-none mb-1">{t('brand_name')}</span>
               <span className="text-[9px] text-dorada-cream/30 uppercase tracking-widest">Luxury Accessories</span>
             </div>
           </div>
 
           <div className="flex flex-wrap justify-center gap-6 text-xs text-dorada-cream/65">
-            <button onClick={handleResetFilters} className="hover:text-dorada-gold transition-colors">الرئيسية</button>
-            <button onClick={() => navigate('/wishlist')} className="hover:text-dorada-gold transition-colors">المفضلة</button>
-            <button onClick={() => navigate('/cart')} className="hover:text-dorada-gold transition-colors">سلة المشتريات</button>
+            <button onClick={handleResetFilters} className="hover:text-dorada-gold transition-colors">{t('nav_home')}</button>
+            <button onClick={() => navigate('/wishlist')} className="hover:text-dorada-gold transition-colors">{t('nav_wishlist')}</button>
+            <button onClick={() => navigate('/cart')} className="hover:text-dorada-gold transition-colors">{t('nav_cart')}</button>
             <button
               onClick={() => navigate('/secure-access')}
               className="text-dorada-cream/30 hover:text-dorada-gold/50 text-[10px] transition-colors"
             >
-              لوحة التحكم
+              {t('nav_admin')}
             </button>
           </div>
 
           <p className="text-dorada-cream/30 text-[10px] text-center md:text-left">
-            © 2026 دورادا للمجوهرات. جميع الحقوق محفوظة.
+            {language === 'ar' ? '© 2026 دورادا للمجوهرات. جميع الحقوق محفوظة.' : language === 'ku' ? '© ٢٠٢٦ ئێکسسواراتی دۆڕادا. هەموو مافەکان پارێزراون.' : '© 2026 Dorada Accessories. All Rights Reserved.'}
           </p>
         </div>
       </footer>
@@ -1213,23 +1233,23 @@ const Shop: React.FC = () => {
               exit={{ scale: 0.95, opacity: 0 }}
               className="relative w-full max-w-md bg-[#121c2c] border border-white/10 rounded-2xl p-6 shadow-2xl z-10"
             >
-              <h3 className="font-serif text-xl font-bold text-dorada-cream mb-4 text-center">أضف تقييمك للمتجر</h3>
+              <h3 className="font-serif text-xl font-bold text-dorada-cream mb-4 text-center">{t('write_review_title')}</h3>
               
               <form onSubmit={handleReviewSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-xs text-dorada-cream/70 mb-1">الاسم الكامل</label>
+                  <label className="block text-xs text-dorada-cream/70 mb-1">{t('review_name')}</label>
                   <input
                     type="text"
                     required
                     value={newReview.name}
                     onChange={(e) => setNewReview({ ...newReview, name: e.target.value })}
                     className="w-full px-4 py-2 text-sm rounded-xl bg-black/20 border border-white/10 text-dorada-cream focus:border-dorada-gold focus:outline-none"
-                    placeholder="اكتب اسمك هنا"
+                    placeholder={t('name_placeholder')}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs text-dorada-cream/70 mb-1">التقييم</label>
+                  <label className="block text-xs text-dorada-cream/70 mb-1">{t('review_rating')}</label>
                   <div className="flex gap-2">
                     {[1, 2, 3, 4, 5].map((star) => (
                       <button
@@ -1245,14 +1265,14 @@ const Shop: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-xs text-dorada-cream/70 mb-1">التعليق</label>
+                  <label className="block text-xs text-dorada-cream/70 mb-1">{t('review_comment')}</label>
                   <textarea
                     required
                     rows={4}
                     value={newReview.comment}
                     onChange={(e) => setNewReview({ ...newReview, comment: e.target.value })}
                     className="w-full px-4 py-2 text-sm rounded-xl bg-black/20 border border-white/10 text-dorada-cream focus:border-dorada-gold focus:outline-none resize-none"
-                    placeholder="اكتب رأيك بصراحة عن جودة المجوهرات والخدمة..."
+                    placeholder={t('comment_placeholder')}
                   />
                 </div>
 
@@ -1262,14 +1282,14 @@ const Shop: React.FC = () => {
                     disabled={isSubmittingReview}
                     className="flex-1 gold-btn py-2 text-xs font-bold disabled:opacity-50"
                   >
-                    {isSubmittingReview ? 'جاري الإرسال...' : 'إرسال التقييم'}
+                    {isSubmittingReview ? t('sending') : t('review_submit')}
                   </button>
                   <button
                     type="button"
                     onClick={() => setIsReviewModalOpen(false)}
                     className="px-4 py-2 rounded-xl border border-white/10 text-xs text-dorada-cream/75 hover:bg-white/5"
                   >
-                    إلغاء
+                    {t('cancel')}
                   </button>
                 </div>
               </form>
@@ -1330,6 +1350,7 @@ const ProductCard: React.FC<{
   onClick: () => void;
   formatPrice: (price: number) => string;
 }> = ({ product, onAddToCart, onAddToWishlist, onQuickView, isInWishlist, onClick, formatPrice }) => {
+  const { t, getLocalized } = useLanguage();
   const isOutOfStock = product.quantity === 0;
 
   return (
@@ -1343,7 +1364,7 @@ const ProductCard: React.FC<{
         )}
         <img
           src={getOptimizedImageUrl(product.images[0], 300)}
-          alt={product.nameAr}
+          alt={getLocalized(product, 'name')}
           loading="lazy"
           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 bg-black/20"
         />
@@ -1351,14 +1372,16 @@ const ProductCard: React.FC<{
         {/* Out of Stock Overlay */}
         {isOutOfStock && (
           <div className="absolute inset-0 bg-black/75 flex items-center justify-center z-10">
-            <span className="text-[10px] sm:text-xs text-white font-bold border border-white/15 px-2 py-0.5 rounded-full bg-black/20">نفذت</span>
+            <span className="text-[10px] sm:text-xs text-white font-bold border border-white/15 px-2 py-0.5 rounded-full bg-black/20">
+              {t('product_out_of_stock')}
+            </span>
           </div>
         )}
 
         {/* Discount Badge */}
         {product.originalPrice && product.originalPrice > product.price && !isOutOfStock && (
           <div className="absolute top-2 right-2 px-2 py-0.5 rounded-full bg-red-500 text-white text-[9px] font-bold z-10 tracking-wide">
-            خصم
+            {t('cart_discount')}
           </div>
         )}
 
@@ -1388,9 +1411,11 @@ const ProductCard: React.FC<{
       {/* Info Container - Compact padding */}
       <div className="p-2 sm:p-4 flex flex-col flex-grow justify-between">
         <div>
-          <p className="text-[8px] sm:text-[10px] text-dorada-gold font-sans font-medium mb-0.5 uppercase tracking-wider">{product.categoryAr}</p>
+          <p className="text-[8px] sm:text-[10px] text-dorada-gold font-sans font-medium mb-0.5 uppercase tracking-wider">
+            {getLocalized(product, 'category')}
+          </p>
           <h3 className="font-serif text-xs sm:text-base font-semibold text-dorada-cream mb-2 group-hover:text-dorada-gold transition-colors line-clamp-1">
-            {product.nameAr}
+            {getLocalized(product, 'name')}
           </h3>
         </div>
         
@@ -1414,7 +1439,7 @@ const ProductCard: React.FC<{
               className="p-1.5 sm:px-3 sm:py-1.5 rounded-lg sm:rounded-xl bg-[#1e293b] hover:bg-dorada-gold hover:text-black border border-white/5 hover:border-transparent text-[10px] sm:text-xs transition-all duration-300 flex items-center justify-center gap-1"
             >
               <ShoppingBag className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">أضف</span>
+              <span className="hidden sm:inline">{t('product_add_to_cart')}</span>
             </button>
           )}
         </div>
