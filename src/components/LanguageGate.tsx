@@ -40,7 +40,7 @@ export const LanguageGate: React.FC = () => {
               DORADA ACCESSORIES
             </h1>
             <p className="text-xs text-dorada-gold uppercase tracking-wider font-mono">
-              Luxury Collection
+              Aesthetic Collection
             </p>
           </div>
         </div>
