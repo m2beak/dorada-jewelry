@@ -113,10 +113,6 @@ const Checkout: React.FC = () => {
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
-    if (!formData.customerName.trim()) {
-      newErrors.customerName = language === 'ku' ? 'تکایە ناوی تەواوت بنووسە' : language === 'en' ? 'Please enter your name' : 'الرجاء إدخال الاسم الكامل';
-    }
-
     if (!formData.customerPhone.trim()) {
       newErrors.customerPhone = language === 'ku' ? 'تکایە ژمارەی مۆبایل بنووسە' : language === 'en' ? 'Please enter phone number' : 'الرجاء إدخال رقم الهاتف';
     } else if (!validateIraqiPhone(formData.customerPhone)) {
@@ -170,7 +166,13 @@ const Checkout: React.FC = () => {
     // Pass nameAr and nameKu (fallback name) to database
     const prizeNameAr = rolledPrize ? (rolledPrize.nameAr || rolledPrize.name) : undefined;
     const prizeNameKu = rolledPrize ? (rolledPrize.nameKu || rolledPrize.name) : undefined;
-    const result = await placeOrder(formData, prizeNameAr, prizeNameKu);
+    
+    const submissionData = {
+      ...formData,
+      customerName: formData.customerName.trim() || (language === 'ku' ? 'کڕیار' : language === 'en' ? 'Customer' : 'زبون')
+    };
+
+    const result = await placeOrder(submissionData, prizeNameAr, prizeNameKu);
 
     if (result.success && result.order) {
       setOrderId(result.order.id.slice(-6).toUpperCase());
@@ -296,7 +298,10 @@ const Checkout: React.FC = () => {
                 {/* Name */}
                 <div>
                   <label className="block text-sm text-dorada-cream/80 mb-2">
-                    {t('checkout_full_name')} <span className="text-red-400">*</span>
+                    {t('checkout_full_name')}{' '}
+                    <span className="text-xs text-dorada-cream/40">
+                      {language === 'ku' ? '(ئارەزوومەندانە)' : language === 'en' ? '(optional)' : '(اختياري)'}
+                    </span>
                   </label>
                   <div className="relative">
                     <User className={`absolute ${dir === 'rtl' ? 'right-4' : 'left-4'} top-1/2 -translate-y-1/2 w-5 h-5 text-dorada-cream/40`} />
